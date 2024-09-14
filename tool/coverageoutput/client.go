@@ -2,15 +2,13 @@ package coverageoutput
 
 import (
 	"fmt"
-	"log"
-
-	"tests-coverage-tool/tool/config"
-	"tests-coverage-tool/tool/coverageinupt"
-	"tests-coverage-tool/tool/reflection"
-	"tests-coverage-tool/tool/utils"
 
 	"github.com/jhump/protoreflect/desc"
 	"github.com/samber/lo"
+
+	"github.com/Nikita-Filonov/tests-coverage-tool/tool/coverage"
+	"github.com/Nikita-Filonov/tests-coverage-tool/tool/coverageinupt"
+	"github.com/Nikita-Filonov/tests-coverage-tool/tool/reflection"
 )
 
 type OutputCoverageClient struct {
@@ -36,71 +34,76 @@ func NewOutputCoverageClient(
 	}, nil
 }
 
-func (c *OutputCoverageClient) getParameterCoverage(parameter string, resultParameters []string) ParameterCoverage {
-	return ParameterCoverage{
-		Covered:    lo.Contains(lo.Uniq(resultParameters), parameter),
-		Parameter:  parameter,
-		TotalCases: lo.Count(resultParameters, parameter),
+func (c *OutputCoverageClient) getMethodCoverage(descriptor *desc.MethodDescriptor) MethodCoverage {
+	var (
+		option                     = descriptor.GetMethodOptions()
+		filters                    = coverageinupt.ResultsFilters{FilterByFullMethod: descriptor.GetFullyQualifiedName()}
+		results                    = c.inputCoverageClient.FilterResults(filters)
+		covered                    = len(results) > 0
+		totalCases                 = len(results)
+		actualRequestParameters    = c.inputCoverageClient.GetMergedRequestParameters(filters)
+		actualResponseParameters   = c.inputCoverageClient.GetMergedResponseParameters(filters)
+		expectedRequestParameters  = reflection.BuildExpectedResultParameters(descriptor.GetInputType().UnwrapMessage())
+		expectedResponseParameters = reflection.BuildExpectedResultParameters(descriptor.GetOutputType().UnwrapMessage())
+	)
+
+	var (
+		requestTotalParameters         = coverage.GetTotalResultParameters(expectedRequestParameters)
+		responseTotalParameters        = coverage.GetTotalResultParameters(expectedResponseParameters)
+		requestTotalCoveredParameters  = coverage.GetTotalCoveredResultParameters(actualRequestParameters)
+		responseTotalCoveredParameters = coverage.GetTotalCoveredResultParameters(actualResponseParameters)
+		requestParametersCoverage      []coverage.ResultParameters
+		responseParametersCoverage     []coverage.ResultParameters
+	)
+	if covered {
+		requestParametersCoverage = coverage.MergeResultParameters(expectedRequestParameters, actualRequestParameters)
+		responseParametersCoverage = coverage.MergeResultParameters(expectedResponseParameters, actualResponseParameters)
 	}
-}
-
-func (c *OutputCoverageClient) getMethodCoverage(descriptor *desc.MethodDescriptor, logicalService string) MethodCoverage {
-	method := descriptor.GetName()
-	requestParameters := reflection.GetFieldNamesFromMessageDescriptor(descriptor.GetInputType())
-	responseParameters := reflection.GetFieldNamesFromMessageDescriptor(descriptor.GetOutputType())
-
-	filters := coverageinupt.ResultsFilters{Method: method, LogicalService: logicalService}
-	resultsRequestParameters := c.inputCoverageClient.GetRequestParameters(filters)
-	resultsResponseParameters := c.inputCoverageClient.GetResponseParameters(filters)
-
-	requestParametersCoverage := lo.Map(requestParameters, func(item string, _ int) ParameterCoverage {
-		return c.getParameterCoverage(item, resultsRequestParameters)
-	})
-	responseParametersCoverage := lo.Map(responseParameters, func(item string, _ int) ParameterCoverage {
-		return c.getParameterCoverage(item, resultsResponseParameters)
-	})
 
 	return MethodCoverage{
-		Method:     method,
-		Covered:    c.inputCoverageClient.IsMethodCoveted(filters),
-		TotalCases: len(c.inputCoverageClient.FilterResults(filters)),
+		Method:     descriptor.GetName(),
+		Covered:    covered,
+		TotalCases: totalCases,
+		Deprecated: option.GetDeprecated(),
 		RequestCoverage: MethodRequestCoverage{
 			Name:                   descriptor.GetInputType().GetFullyQualifiedName(),
-			TotalParameters:        len(requestParameters),
+			TotalCoverage:          getRequestCoveragePercent(covered, requestTotalParameters, requestTotalCoveredParameters),
+			TotalParameters:        requestTotalParameters,
 			ParametersCoverage:     requestParametersCoverage,
-			TotalCoveredParameters: len(resultsRequestParameters),
+			TotalCoveredParameters: requestTotalCoveredParameters,
 		},
 		ResponseCoverage: MethodRequestCoverage{
 			Name:                   descriptor.GetOutputType().GetFullyQualifiedName(),
-			TotalParameters:        len(responseParameters),
+			TotalCoverage:          getRequestCoveragePercent(covered, responseTotalParameters, responseTotalCoveredParameters),
+			TotalParameters:        responseTotalParameters,
 			ParametersCoverage:     responseParametersCoverage,
-			TotalCoveredParameters: len(resultsResponseParameters),
+			TotalCoveredParameters: responseTotalCoveredParameters,
 		},
 	}
 }
 
 func (c *OutputCoverageClient) getLogicalServiceCoverage(logicalService string) (LogicalServiceCoverage, error) {
-	filters := coverageinupt.ResultsFilters{LogicalService: logicalService}
+	filters := coverageinupt.ResultsFilters{FilterByLogicalService: logicalService}
 	resultsMethods := c.inputCoverageClient.GetUniqueMethods(filters)
 
 	reflectionMethodsDescriptors, err := c.reflectionClient.GetServiceMethodsDescriptors(logicalService)
 	if err != nil {
 		return LogicalServiceCoverage{}, err
 	}
-	reflectionMethods := lo.Map(reflectionMethodsDescriptors, func(item *desc.MethodDescriptor, _ int) string {
-		return item.GetName()
-	})
+
+	reflectionMethods, err := c.reflectionClient.GetServiceMethods(logicalService)
+	if err != nil {
+		return LogicalServiceCoverage{}, err
+	}
 
 	return LogicalServiceCoverage{
-		Methods: lo.Map(reflectionMethodsDescriptors, func(item *desc.MethodDescriptor, _ int) MethodCoverage {
-			return c.getMethodCoverage(item, logicalService)
-		}),
+		Methods:        lo.Map(reflectionMethodsDescriptors, func(item *desc.MethodDescriptor, _ int) MethodCoverage { return c.getMethodCoverage(item) }),
 		TotalCoverage:  getCoveragePercent(reflectionMethods, resultsMethods),
 		LogicalService: logicalService,
 	}, nil
 }
 
-func (c *OutputCoverageClient) getLogicalServiceCoverages() ([]LogicalServiceCoverage, error) {
+func (c *OutputCoverageClient) GetLogicalServiceCoverages() ([]LogicalServiceCoverage, error) {
 	logicalServices, err := c.reflectionClient.GetServices()
 	if err != nil {
 		return nil, err
@@ -108,30 +111,37 @@ func (c *OutputCoverageClient) getLogicalServiceCoverages() ([]LogicalServiceCov
 
 	coverages := make([]LogicalServiceCoverage, len(logicalServices))
 	for index, logicalService := range logicalServices {
-		if coverage, err := c.getLogicalServiceCoverage(logicalService); err == nil {
-			coverages[index] = coverage
+		if serviceCoverage, err := c.getLogicalServiceCoverage(logicalService); err == nil {
+			coverages[index] = serviceCoverage
 		}
 	}
 
 	return coverages, nil
 }
 
-func (c *OutputCoverageClient) SaveResults(resultsDir string) ([]LogicalServiceCoverage, error) {
-	log.Printf("Starting to save logical service coverages into results folder")
-
-	logicalServicesCoverage, err := c.getLogicalServiceCoverages()
+func (c *OutputCoverageClient) GetServiceCoverage() (ServiceCoverage, error) {
+	logicalServices, err := c.reflectionClient.GetServices()
 	if err != nil {
-		return nil, err
+		return ServiceCoverage{}, err
 	}
 
-	if resultsDir == "" {
-		log.Println("Env variable 'TESTS_COVERAGE_INPUT_RESULTS_DIR' empty, skipping")
-		return logicalServicesCoverage, nil
+	var (
+		resultsMethods    []string
+		reflectionMethods []string
+	)
+	for _, logicalService := range logicalServices {
+		filters := coverageinupt.ResultsFilters{FilterByLogicalService: logicalService}
+		resultsMethods = append(resultsMethods, c.inputCoverageClient.GetUniqueMethods(filters)...)
+
+		methods, err := c.reflectionClient.GetServiceMethods(logicalService)
+		if err != nil {
+			return ServiceCoverage{}, err
+		}
+
+		reflectionMethods = append(reflectionMethods, methods...)
 	}
 
-	if err = utils.SaveJSONFile(logicalServicesCoverage, resultsDir, config.StateLogicalServicesCoverageJSON); err != nil {
-		return nil, err
-	}
-
-	return logicalServicesCoverage, nil
+	return ServiceCoverage{
+		TotalCoverage: getCoveragePercent(reflectionMethods, resultsMethods),
+	}, nil
 }

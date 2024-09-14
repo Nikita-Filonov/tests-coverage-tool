@@ -2,9 +2,11 @@ package coverageinupt
 
 import (
 	"context"
+	"fmt"
 	"log"
 
-	"tests-coverage-tool/tool/utils"
+	"github.com/Nikita-Filonov/tests-coverage-tool/tool/config"
+	"github.com/Nikita-Filonov/tests-coverage-tool/tool/utils"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
@@ -20,13 +22,15 @@ func CoverageInterceptor() grpc.UnaryClientInterceptor {
 			return invokerErr
 		}
 
-		outputDir, err := getCoverageResultsDir()
+		toolConfig, err := config.NewConfig()
 		if err != nil {
-			log.Printf("Error getting coverage results dir: %v", err)
+			log.Printf("Error building config: %v", err)
 			return invokerErr
 		}
 
-		if err = utils.SaveJSONFile(result, outputDir, uuid.New().String()); err != nil {
+		filename := fmt.Sprintf("%s.json", uuid.New().String())
+		resultsDir := toolConfig.GetResultsDir()
+		if err = utils.SaveJSONFile(result, resultsDir, filename); err != nil {
 			log.Printf("Error saving coverage result: %v", err)
 		}
 

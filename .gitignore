@@ -19,3 +19,13 @@
 
 # Go workspace file
 go.work
+
+index.html
+coverage-results
+coverage-report.json
+
+!/examples/index.html
+!/tool/report/templates/index.html
+
+.idea
+.DS_Store

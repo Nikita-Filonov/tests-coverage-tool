@@ -4,20 +4,72 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"os"
 )
 
-func ReadJSONFile[T any](path string, a ...any) (*T, error) {
-	path = fmt.Sprintf(path, a...)
-
-	respFile, err := os.Open(path)
+func ReadFile(filename string, a ...any) ([]byte, error) {
+	respFile, err := os.Open(fmt.Sprintf(filename, a...))
 	if err != nil {
 		return nil, err
 	}
 	defer respFile.Close()
 
-	byteValue, err := io.ReadAll(respFile)
+	bytes, err := io.ReadAll(respFile)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes, nil
+}
+
+func SaveFile(input []byte, dir, filename string) error {
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		return fmt.Errorf("failed to create directory %s", dir)
+	}
+
+	filename = fmt.Sprintf("%s/%s", dir, filename)
+
+	file, err := os.Create(filename)
+	if err != nil {
+		return fmt.Errorf("failed to create file %s", filename)
+	}
+	defer file.Close()
+
+	if _, err = file.Write(input); err != nil {
+		return fmt.Errorf("failed to save file content %s", filename)
+	}
+
+	return nil
+}
+
+func CopyFile(source, destination string) error {
+	sourceFile, err := os.Open(source)
+	if err != nil {
+		return err
+	}
+	defer sourceFile.Close()
+
+	destFile, err := os.Create(destination)
+	if err != nil {
+		return err
+	}
+	defer destFile.Close()
+
+	_, err = io.Copy(destFile, sourceFile)
+	if err != nil {
+		return err
+	}
+
+	err = destFile.Sync()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func ReadJSONFile[T any](path string, a ...any) (*T, error) {
+	byteValue, err := ReadFile(path, a...)
 	if err != nil {
 		return nil, err
 	}
@@ -38,28 +90,4 @@ func SaveJSONFile(input any, dir, filename string) error {
 	}
 
 	return SaveFile(data, dir, filename)
-}
-
-func SaveFile(input []byte, dir, filename string) error {
-	log.Printf("Starting to save file %s into directory %s", filename, dir)
-
-	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-		return fmt.Errorf("failed to create directory %s", dir)
-	}
-
-	filename = fmt.Sprintf("%s/%s", dir, filename)
-
-	file, err := os.Create(filename)
-	if err != nil {
-		return fmt.Errorf("failed to create file %s", filename)
-	}
-	defer file.Close()
-
-	if _, err = file.Write(input); err != nil {
-		return fmt.Errorf("failed to save file content %s", filename)
-	}
-
-	log.Printf("Successfully saved file %s into directory %s", filename, dir)
-
-	return nil
 }

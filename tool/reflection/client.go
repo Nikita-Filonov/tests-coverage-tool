@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"strings"
 
-	"tests-coverage-tool/tool/config"
-
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/grpcreflect"
 	"github.com/samber/lo"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
+
+	"github.com/Nikita-Filonov/tests-coverage-tool/tool/config"
 )
 
 type GRPCReflectionClient struct {
@@ -21,9 +21,9 @@ type GRPCReflectionClient struct {
 	reflectionClient *grpcreflect.Client
 }
 
-func NewGRPCReflectionClient(ctx context.Context, config config.Config) (*GRPCReflectionClient, error) {
+func NewGRPCReflectionClient(ctx context.Context, service config.Service) (*GRPCReflectionClient, error) {
 	conn, err := grpc.NewClient(
-		config.Service.GetURL(),
+		service.Host.String(),
 		grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{InsecureSkipVerify: true})),
 	)
 	if err != nil {
@@ -57,4 +57,13 @@ func (c *GRPCReflectionClient) GetServiceMethodsDescriptors(service string) ([]*
 	}
 
 	return serviceDescriptor.GetMethods(), nil
+}
+
+func (c *GRPCReflectionClient) GetServiceMethods(service string) ([]string, error) {
+	methods, err := c.GetServiceMethodsDescriptors(service)
+	if err != nil {
+		return nil, err
+	}
+
+	return lo.Map(methods, func(item *desc.MethodDescriptor, _ int) string { return item.GetFullyQualifiedName() }), nil
 }
