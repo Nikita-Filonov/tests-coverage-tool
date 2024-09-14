@@ -24,6 +24,7 @@ index.html
 coverage-results
 coverage-report.json
 
+!/docs/index.html
 !/examples/index.html
 !/tool/report/templates/index.html
 
