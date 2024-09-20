@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/samber/lo"
-
 	"github.com/Nikita-Filonov/tests-coverage-tool/tool/config"
 	"github.com/Nikita-Filonov/tests-coverage-tool/tool/coverageoutput"
 )
@@ -42,10 +40,4 @@ func (s CoverageReportState) getStateJSON() (string, error) {
 	}
 
 	return string(data), nil
-}
-
-func (s CoverageReportState) GetMapServiceNameToTotalCoverage() map[string]float64 {
-	return lo.SliceToMap(s.Config.Services, func(item config.Service) (string, float64) {
-		return item.Name, s.ServiceCoverages[item.Host].TotalCoverage
-	})
 }
