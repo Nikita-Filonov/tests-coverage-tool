@@ -5,10 +5,11 @@ import (
 )
 
 type ResultParameters struct {
-	Covered    bool               `json:"covered"`
-	Parameter  string             `json:"parameter"`
-	Parameters []ResultParameters `json:"parameters,omitempty"`
-	Deprecated bool               `json:"deprecated"`
+	Covered                bool               `json:"covered,omitempty"`
+	Parameter              string             `json:"parameter"`
+	Parameters             []ResultParameters `json:"parameters,omitempty"`
+	Deprecated             bool               `json:"deprecated,omitempty"`
+	HasUncoveredParameters bool               `json:"hasUncoveredParameters,omitempty"`
 }
 
 type Result struct {

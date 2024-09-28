@@ -60,6 +60,9 @@ func (c *OutputCoverageClient) getMethodCoverage(descriptor *desc.MethodDescript
 		responseParametersCoverage = coverage.MergeResultParameters(expectedResponseParameters, actualResponseParameters)
 	}
 
+	coverage.EnrichSliceWithUncoveredResultParameters(requestParametersCoverage)
+	coverage.EnrichSliceWithUncoveredResultParameters(responseParametersCoverage)
+
 	return MethodCoverage{
 		Method:     descriptor.GetName(),
 		Covered:    covered,
