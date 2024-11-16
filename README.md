@@ -14,7 +14,9 @@ your tests thoroughly validate your gRPC endpoints. The tool gathers the followi
 - **Deprecation Status:** Information on whether methods and their parameters are deprecated, aiding in maintaining
   up-to-date and clean tests;
 - **Support for Multiple Services:** The tool can handle coverage reporting for multiple gRPC services within a single
-  project.
+  project;
+- **Coverage history:** The tool can maintain the history of overall service coverage, logical service coverage, and
+  coverage of gRPC method request and response parameters.
 
 You can see a report example [here](https://nikita-filonov.github.io/tests-coverage-tool/).
 
