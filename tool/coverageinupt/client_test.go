@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/Nikita-Filonov/tests-coverage-tool/tool/coverage"
+	"github.com/Nikita-Filonov/tests-coverage-tool/tool/models"
 )
 
 type inputCoverageClientTest[T any] struct {
@@ -16,7 +17,7 @@ type inputCoverageClientTest[T any] struct {
 }
 
 var filterResultsClient = InputCoverageClient{
-	results: []coverage.Result{
+	results: []models.Result{
 		{Method: "service.get"},
 		{Method: "service.create"},
 		{Method: "service.update"},
@@ -26,56 +27,56 @@ var filterResultsClient = InputCoverageClient{
 }
 
 var getRequestParametersClient = InputCoverageClient{
-	results: []coverage.Result{
+	results: []models.Result{
 		{
 			Method:   "service.get",
-			Request:  []coverage.ResultParameters{{Parameter: "a"}, {Parameter: "b"}},
-			Response: []coverage.ResultParameters{{Parameter: "a"}, {Parameter: "b"}},
+			Request:  []models.ResultParameters{{Parameter: "a"}, {Parameter: "b"}},
+			Response: []models.ResultParameters{{Parameter: "a"}, {Parameter: "b"}},
 		},
 		{
 			Method:   "service.create",
-			Request:  []coverage.ResultParameters{{Parameter: "c"}, {Parameter: "d"}},
-			Response: []coverage.ResultParameters{{Parameter: "c"}, {Parameter: "d"}},
+			Request:  []models.ResultParameters{{Parameter: "c"}, {Parameter: "d"}},
+			Response: []models.ResultParameters{{Parameter: "c"}, {Parameter: "d"}},
 		},
 	},
 }
 
 var getMergedRequestParametersClient = InputCoverageClient{
-	results: []coverage.Result{
+	results: []models.Result{
 		{
 			Method:   "service.get",
-			Request:  []coverage.ResultParameters{{Parameter: "a"}, {Parameter: "b", Covered: true}},
-			Response: []coverage.ResultParameters{{Parameter: "a"}, {Parameter: "b", Covered: true}},
+			Request:  []models.ResultParameters{{Parameter: "a"}, {Parameter: "b", Covered: true}},
+			Response: []models.ResultParameters{{Parameter: "a"}, {Parameter: "b", Covered: true}},
 		},
 		{
 			Method:   "service.get",
-			Request:  []coverage.ResultParameters{{Parameter: "a", Covered: true}, {Parameter: "b"}},
-			Response: []coverage.ResultParameters{{Parameter: "a", Covered: true}, {Parameter: "b"}},
+			Request:  []models.ResultParameters{{Parameter: "a", Covered: true}, {Parameter: "b"}},
+			Response: []models.ResultParameters{{Parameter: "a", Covered: true}, {Parameter: "b"}},
 		},
 		{
 			Method:   "service.create",
-			Request:  []coverage.ResultParameters{{Parameter: "a"}, {Parameter: "b"}},
-			Response: []coverage.ResultParameters{{Parameter: "a"}, {Parameter: "b"}},
+			Request:  []models.ResultParameters{{Parameter: "a"}, {Parameter: "b"}},
+			Response: []models.ResultParameters{{Parameter: "a"}, {Parameter: "b"}},
 		},
 		{
 			Method:   "service2.get",
-			Request:  []coverage.ResultParameters{{Parameter: "a"}, {Parameter: "b"}},
-			Response: []coverage.ResultParameters{{Parameter: "a"}, {Parameter: "b"}},
+			Request:  []models.ResultParameters{{Parameter: "a"}, {Parameter: "b"}},
+			Response: []models.ResultParameters{{Parameter: "a"}, {Parameter: "b"}},
 		},
 	},
 }
 
 func TestInputCoverageClientFilterResults(t *testing.T) {
-	tests := []inputCoverageClientTest[[]coverage.Result]{
+	tests := []inputCoverageClientTest[[]models.Result]{
 		{
 			name:    "Filter by full method",
-			want:    []coverage.Result{{Method: "service.get"}},
+			want:    []models.Result{{Method: "service.get"}},
 			client:  filterResultsClient,
 			filters: ResultsFilters{FilterByFullMethod: "service.get"},
 		},
 		{
 			name: "Filter by logical service",
-			want: []coverage.Result{
+			want: []models.Result{
 				{Method: "service.get"},
 				{Method: "service.create"},
 				{Method: "service.update"},
@@ -85,7 +86,7 @@ func TestInputCoverageClientFilterResults(t *testing.T) {
 		},
 		{
 			name:    "Empty filters",
-			want:    []coverage.Result{},
+			want:    []models.Result{},
 			client:  filterResultsClient,
 			filters: ResultsFilters{},
 		},
@@ -157,10 +158,10 @@ func TestInputCoverageClientGetUniqueMethods(t *testing.T) {
 }
 
 func TestInputCoverageClientGetRequestParameters(t *testing.T) {
-	tests := []inputCoverageClientTest[[][]coverage.ResultParameters]{
+	tests := []inputCoverageClientTest[[][]models.ResultParameters]{
 		{
 			name: "Filter by full method",
-			want: [][]coverage.ResultParameters{
+			want: [][]models.ResultParameters{
 				{{Parameter: "a"}, {Parameter: "b"}},
 			},
 			client:  getRequestParametersClient,
@@ -168,7 +169,7 @@ func TestInputCoverageClientGetRequestParameters(t *testing.T) {
 		},
 		{
 			name: "Filter by logical service",
-			want: [][]coverage.ResultParameters{
+			want: [][]models.ResultParameters{
 				{{Parameter: "a"}, {Parameter: "b"}},
 				{{Parameter: "c"}, {Parameter: "d"}},
 			},
@@ -177,7 +178,7 @@ func TestInputCoverageClientGetRequestParameters(t *testing.T) {
 		},
 		{
 			name:    "Empty filters",
-			want:    [][]coverage.ResultParameters{},
+			want:    [][]models.ResultParameters{},
 			client:  getRequestParametersClient,
 			filters: ResultsFilters{},
 		},
@@ -191,10 +192,10 @@ func TestInputCoverageClientGetRequestParameters(t *testing.T) {
 }
 
 func TestInputCoverageClientGetResponseParameters(t *testing.T) {
-	tests := []inputCoverageClientTest[[][]coverage.ResultParameters]{
+	tests := []inputCoverageClientTest[[][]models.ResultParameters]{
 		{
 			name: "Filter by full method",
-			want: [][]coverage.ResultParameters{
+			want: [][]models.ResultParameters{
 				{{Parameter: "a"}, {Parameter: "b"}},
 			},
 			client:  getRequestParametersClient,
@@ -202,7 +203,7 @@ func TestInputCoverageClientGetResponseParameters(t *testing.T) {
 		},
 		{
 			name: "Filter by logical service",
-			want: [][]coverage.ResultParameters{
+			want: [][]models.ResultParameters{
 				{{Parameter: "a"}, {Parameter: "b"}},
 				{{Parameter: "c"}, {Parameter: "d"}},
 			},
@@ -211,7 +212,7 @@ func TestInputCoverageClientGetResponseParameters(t *testing.T) {
 		},
 		{
 			name:    "Empty filters",
-			want:    [][]coverage.ResultParameters{},
+			want:    [][]models.ResultParameters{},
 			client:  getRequestParametersClient,
 			filters: ResultsFilters{},
 		},
@@ -225,21 +226,21 @@ func TestInputCoverageClientGetResponseParameters(t *testing.T) {
 }
 
 func TestInputCoverageClientGetMergedRequestParameters(t *testing.T) {
-	tests := []inputCoverageClientTest[[]coverage.ResultParameters]{
+	tests := []inputCoverageClientTest[[]models.ResultParameters]{
 		{
 			name: "Filter by full method",
-			want: []coverage.ResultParameters{
-				{Covered: true, Parameter: "a", Parameters: []coverage.ResultParameters{}},
-				{Covered: true, Parameter: "b", Parameters: []coverage.ResultParameters{}},
+			want: []models.ResultParameters{
+				{Covered: true, Parameter: "a", Parameters: []models.ResultParameters{}},
+				{Covered: true, Parameter: "b", Parameters: []models.ResultParameters{}},
 			},
 			client:  getMergedRequestParametersClient,
 			filters: ResultsFilters{FilterByFullMethod: "service.get"},
 		},
 		{
 			name: "Filter by logical service",
-			want: []coverage.ResultParameters{
-				{Covered: true, Parameter: "a", Parameters: []coverage.ResultParameters{}},
-				{Covered: true, Parameter: "b", Parameters: []coverage.ResultParameters{}},
+			want: []models.ResultParameters{
+				{Covered: true, Parameter: "a", Parameters: []models.ResultParameters{}},
+				{Covered: true, Parameter: "b", Parameters: []models.ResultParameters{}},
 			},
 			client:  getMergedRequestParametersClient,
 			filters: ResultsFilters{FilterByLogicalService: "service"},
@@ -263,21 +264,21 @@ func TestInputCoverageClientGetMergedRequestParameters(t *testing.T) {
 }
 
 func TestInputCoverageClientGetMergedResponseParameters(t *testing.T) {
-	tests := []inputCoverageClientTest[[]coverage.ResultParameters]{
+	tests := []inputCoverageClientTest[[]models.ResultParameters]{
 		{
 			name: "Filter by full method",
-			want: []coverage.ResultParameters{
-				{Covered: true, Parameter: "a", Parameters: []coverage.ResultParameters{}},
-				{Covered: true, Parameter: "b", Parameters: []coverage.ResultParameters{}},
+			want: []models.ResultParameters{
+				{Covered: true, Parameter: "a", Parameters: []models.ResultParameters{}},
+				{Covered: true, Parameter: "b", Parameters: []models.ResultParameters{}},
 			},
 			client:  getMergedRequestParametersClient,
 			filters: ResultsFilters{FilterByFullMethod: "service.get"},
 		},
 		{
 			name: "Filter by logical service",
-			want: []coverage.ResultParameters{
-				{Covered: true, Parameter: "a", Parameters: []coverage.ResultParameters{}},
-				{Covered: true, Parameter: "b", Parameters: []coverage.ResultParameters{}},
+			want: []models.ResultParameters{
+				{Covered: true, Parameter: "a", Parameters: []models.ResultParameters{}},
+				{Covered: true, Parameter: "b", Parameters: []models.ResultParameters{}},
 			},
 			client:  getMergedRequestParametersClient,
 			filters: ResultsFilters{FilterByLogicalService: "service"},

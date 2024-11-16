@@ -4,17 +4,17 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"
 
-	"github.com/Nikita-Filonov/tests-coverage-tool/tool/coverage"
+	"github.com/Nikita-Filonov/tests-coverage-tool/tool/models"
 )
 
-func buildEnumExpectedResultParameters(descriptor protoreflect.FieldDescriptor) []coverage.ResultParameters {
+func buildEnumExpectedResultParameters(descriptor protoreflect.FieldDescriptor) []models.ResultParameters {
 	enumDescriptor := descriptor.Enum()
-	var enumResults []coverage.ResultParameters
+	var enumResults []models.ResultParameters
 	for index := 0; index < enumDescriptor.Values().Len(); index++ {
 		enumValue := enumDescriptor.Values().Get(index)
 		enumOptions := enumValue.Options().(*descriptorpb.EnumValueOptions)
 
-		enumResults = append(enumResults, coverage.ResultParameters{
+		enumResults = append(enumResults, models.ResultParameters{
 			Parameter:  string(enumValue.Name()),
 			Deprecated: enumOptions.GetDeprecated(),
 		})
@@ -23,12 +23,12 @@ func buildEnumExpectedResultParameters(descriptor protoreflect.FieldDescriptor) 
 	return enumResults
 }
 
-func BuildExpectedResultParameters(descriptor protoreflect.MessageDescriptor) []coverage.ResultParameters {
-	var results []coverage.ResultParameters
+func BuildExpectedResultParameters(descriptor protoreflect.MessageDescriptor) []models.ResultParameters {
+	var results []models.ResultParameters
 
 	for index := 0; index < descriptor.Fields().Len(); index++ {
 		field := descriptor.Fields().Get(index)
-		result := coverage.ResultParameters{
+		result := models.ResultParameters{
 			Parameter:  string(field.Name()),
 			Deprecated: field.Options().(*descriptorpb.FieldOptions).GetDeprecated(),
 		}

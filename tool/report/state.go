@@ -5,10 +5,11 @@ import (
 
 	"github.com/Nikita-Filonov/tests-coverage-tool/tool/config"
 	"github.com/Nikita-Filonov/tests-coverage-tool/tool/logger"
+	"github.com/Nikita-Filonov/tests-coverage-tool/tool/models"
 	"github.com/Nikita-Filonov/tests-coverage-tool/tool/utils"
 )
 
-func ReadCoverageReportState() (*CoverageReportState, error) {
+func ReadCoverageReportState() (*models.CoverageState, error) {
 	toolConfig, err := config.NewConfig()
 	if err != nil {
 		log.Printf("Error building config: %v", err)
@@ -25,5 +26,5 @@ func ReadCoverageReportState() (*CoverageReportState, error) {
 		return nil, nil
 	}
 
-	return utils.ReadJSONFile[CoverageReportState](toolConfig.GetJSONReportFile())
+	return utils.ReadJSONFile[models.CoverageState](toolConfig.GetJSONReportFile())
 }

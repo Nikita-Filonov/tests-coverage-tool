@@ -6,7 +6,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/Nikita-Filonov/tests-coverage-tool/tool/coverage"
+	"github.com/Nikita-Filonov/tests-coverage-tool/tool/models"
 )
 
 func getProtoMessage(input interface{}) proto.Message {
@@ -17,18 +17,18 @@ func getProtoMessage(input interface{}) proto.Message {
 	return nil
 }
 
-func buildCoverageResult(method string, req, reply interface{}) (coverage.Result, error) {
+func buildCoverageResult(method string, req, reply interface{}) (models.Result, error) {
 	requestMessage := getProtoMessage(req)
 	if requestMessage == nil {
-		return coverage.Result{}, fmt.Errorf("unable to build coverage result struct because of malformed request")
+		return models.Result{}, fmt.Errorf("unable to build coverage result struct because of malformed request")
 	}
 
 	responseMessage := getProtoMessage(reply)
 	if responseMessage == nil {
-		return coverage.Result{}, fmt.Errorf("unable to build coverage result struct because of malformed response")
+		return models.Result{}, fmt.Errorf("unable to build coverage result struct because of malformed response")
 	}
 
-	return coverage.Result{
+	return models.Result{
 		Method:   strings.ReplaceAll(strings.TrimPrefix(method, "/"), "/", "."),
 		Request:  buildActualResultParameters(requestMessage),
 		Response: buildActualResultParameters(responseMessage),

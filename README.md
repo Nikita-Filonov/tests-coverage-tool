@@ -105,15 +105,31 @@ This will generate a coverage report based on the results gathered during your t
 
 The tool can be configured via environment variables or a YAML configuration file. Below are the available options:
 
-| Environment                     | YAML           | Default              | Example                                                                                                                                      |
-|---------------------------------|----------------|----------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
-| —                               | services       | —                    | Defines the gRPC services to monitor. See the example configuration file at [./examples/config-example.yaml](./examples/config-example.yaml) |
-| TESTS_COVERAGE_CONFIG_FILE      | —              | —                    | Path to the YAML configuration file. Example: ./examples/config-example.yaml                                                                 |
-| TESTS_COVERAGE_RESULTS_DIR      | resultsDir     | .                    | Directory where coverage results will be stored. Example: if set to `./tests`, results will be stored in `./tests/coverage-results`          |
-| TESTS_COVERAGE_HTML_REPORT_DIR  | htmlReportDir  | .                    | Directory where the HTML report will be saved                                                                                                |
-| TESTS_COVERAGE_JSON_REPORT_DIR  | jsonReportDir  | .                    | Directory where the JSON report will be saved                                                                                                |
-| TESTS_COVERAGE_HTML_REPORT_FILE | htmlReportFile | index.html           | Name of the HTML report file                                                                                                                 |
-| TESTS_COVERAGE_JSON_REPORT_FILE | jsonReportFile | coverage-report.json | Name of the JSON report file                                                                                                                 |
+| Environment                            | YAML                  | Default               | Example                                                                                                                                                                                                                                   |
+|----------------------------------------|-----------------------|-----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| —                                      | services              | —                     | Defines the gRPC services to monitor. See the example configuration file at [./examples/config-example.yaml](./examples/config-example.yaml)                                                                                              |
+| TESTS_COVERAGE_CONFIG_FILE             | —                     | —                     | Path to the YAML configuration file. Example: [./examples/config-example.yaml](./examples/config-example.yaml)                                                                                                                            |
+| TESTS_COVERAGE_RESULTS_DIR             | resultsDir            | .                     | Directory where coverage results will be stored. Example: if set to `./tests`, results will be stored in `./tests/coverage-results`                                                                                                       |
+| TESTS_COVERAGE_HISTORY_DIR             | historyDir            | .                     | Directory where the history will be saved                                                                                                                                                                                                 |
+| TESTS_COVERAGE_HISTORY_FILE            | historyFile           | coverage-history.json | Name of the history file                                                                                                                                                                                                                  |
+| TESTS_COVERAGE_HTML_REPORT_DIR         | htmlReportDir         | .                     | Directory where the HTML report will be saved                                                                                                                                                                                             |
+| TESTS_COVERAGE_JSON_REPORT_DIR         | jsonReportDir         | .                     | Directory where the JSON report will be saved                                                                                                                                                                                             |
+| TESTS_COVERAGE_HTML_REPORT_FILE        | htmlReportFile        | index.html            | Name of the HTML report file                                                                                                                                                                                                              |
+| TESTS_COVERAGE_JSON_REPORT_FILE        | jsonReportFile        | coverage-report.json  | Name of the JSON report file                                                                                                                                                                                                              |
+| TESTS_COVERAGE_HISTORY_RETENTION_LIMIT | historyRetentionLimit | 30                    | Defines the maximum number of the most recent coverage history records to be retained. In this case, the value `30` means that only the latest 30 entries in the coverage history will be preserved, and older entries will be discarded. |
+
+## History
+
+To save coverage history, you must retain the history file, which is configured using the environment variables
+`TESTS_COVERAGE_HISTORY_DIR` and `TESTS_COVERAGE_HISTORY_FILE`. By default, the history file will be stored in the root
+directory with the name `coverage-history.json`. You do not need to create this file manually—it will be automatically
+generated when you run the save-report command. After that, you simply need to keep the `coverage-history.jso`n file for
+subsequent report generations. Each time a new report is generated, the file will be automatically updated with the
+latest coverage history, and the history will be added to the coverage report.
+
+If you wish to disable the coverage history functionality, you can set the `TESTS_COVERAGE_HISTORY_DIR` and
+`TESTS_COVERAGE_HISTORY_FILE` environment variables to empty strings. This can be done through the YAML configuration
+file using the `historyDir` and `historyFile` settings.
 
 ## Commands
 

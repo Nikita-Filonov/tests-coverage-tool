@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/Nikita-Filonov/tests-coverage-tool/tool/models"
 )
 
 type enrichWithUncoveredResultParametersTest[T any] struct {
@@ -12,14 +14,14 @@ type enrichWithUncoveredResultParametersTest[T any] struct {
 	input T
 }
 
-var wantWithUncoveredChildrenParameters = ResultParameters{
+var wantWithUncoveredChildrenParameters = models.ResultParameters{
 	Covered:   true,
 	Parameter: "a",
-	Parameters: []ResultParameters{
+	Parameters: []models.ResultParameters{
 		{
 			Covered:   true,
 			Parameter: "b",
-			Parameters: []ResultParameters{
+			Parameters: []models.ResultParameters{
 				{Covered: true, Parameter: "e"},
 				{Covered: false, Parameter: "d"},
 			},
@@ -29,14 +31,14 @@ var wantWithUncoveredChildrenParameters = ResultParameters{
 	},
 	HasUncoveredParameters: true,
 }
-var inputWithUncoveredChildrenParameters = ResultParameters{
+var inputWithUncoveredChildrenParameters = models.ResultParameters{
 	Covered:   true,
 	Parameter: "a",
-	Parameters: []ResultParameters{
+	Parameters: []models.ResultParameters{
 		{
 			Covered:   true,
 			Parameter: "b",
-			Parameters: []ResultParameters{
+			Parameters: []models.ResultParameters{
 				{Covered: true, Parameter: "e"},
 				{Covered: false, Parameter: "d"},
 			},
@@ -45,25 +47,25 @@ var inputWithUncoveredChildrenParameters = ResultParameters{
 	},
 }
 
-var wantWithoutUncoveredChildrenParameters = ResultParameters{
+var wantWithoutUncoveredChildrenParameters = models.ResultParameters{
 	Covered:   true,
 	Parameter: "a",
-	Parameters: []ResultParameters{
+	Parameters: []models.ResultParameters{
 		{Covered: true, Parameter: "b"},
 		{Covered: true, Parameter: "c"},
 	},
 }
-var inputWithoutUncoveredChildrenParameters = ResultParameters{
+var inputWithoutUncoveredChildrenParameters = models.ResultParameters{
 	Covered:   true,
 	Parameter: "a",
-	Parameters: []ResultParameters{
+	Parameters: []models.ResultParameters{
 		{Covered: true, Parameter: "b"},
 		{Covered: true, Parameter: "c"},
 	},
 }
 
 func TestEnrichWithUncoveredResultParameters(t *testing.T) {
-	tests := []enrichWithUncoveredResultParametersTest[ResultParameters]{
+	tests := []enrichWithUncoveredResultParametersTest[models.ResultParameters]{
 		{
 			name:  "With uncovered children parameters",
 			want:  wantWithUncoveredChildrenParameters,
@@ -85,16 +87,16 @@ func TestEnrichWithUncoveredResultParameters(t *testing.T) {
 }
 
 func TestEnrichSliceWithUncoveredResultParameters(t *testing.T) {
-	tests := []enrichWithUncoveredResultParametersTest[[]ResultParameters]{
+	tests := []enrichWithUncoveredResultParametersTest[[]models.ResultParameters]{
 		{
 			name:  "With uncovered children parameters",
-			want:  []ResultParameters{wantWithUncoveredChildrenParameters},
-			input: []ResultParameters{inputWithUncoveredChildrenParameters},
+			want:  []models.ResultParameters{wantWithUncoveredChildrenParameters},
+			input: []models.ResultParameters{inputWithUncoveredChildrenParameters},
 		},
 		{
 			name:  "Without uncovered children parameters",
-			want:  []ResultParameters{wantWithoutUncoveredChildrenParameters},
-			input: []ResultParameters{inputWithoutUncoveredChildrenParameters},
+			want:  []models.ResultParameters{wantWithoutUncoveredChildrenParameters},
+			input: []models.ResultParameters{inputWithoutUncoveredChildrenParameters},
 		},
 	}
 

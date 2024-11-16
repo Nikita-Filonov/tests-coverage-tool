@@ -7,6 +7,7 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 
 	"github.com/Nikita-Filonov/tests-coverage-tool/tool/coverage"
+	"github.com/Nikita-Filonov/tests-coverage-tool/tool/models"
 )
 
 func isDefaultValue(field protoreflect.FieldDescriptor, value protoreflect.Value) bool {
@@ -53,29 +54,29 @@ func isMessageDefault(message protoreflect.Message) bool {
 	return true
 }
 
-func buildMapActualResultParameters(field protoreflect.FieldDescriptor, value protoreflect.Value) coverage.ResultParameters {
-	var subResults []coverage.ResultParameters
+func buildMapActualResultParameters(field protoreflect.FieldDescriptor, value protoreflect.Value) models.ResultParameters {
+	var subResults []models.ResultParameters
 	value.Map().Range(func(k protoreflect.MapKey, v protoreflect.Value) bool {
 		subMessage := v.Message()
 		subResults = append(subResults, buildActualResultParameters(subMessage.Interface())...)
 		return true
 	})
 
-	return coverage.ResultParameters{
+	return models.ResultParameters{
 		Covered:    !isDefaultValue(field, value),
 		Parameter:  string(field.Name()),
 		Parameters: subResults,
 	}
 }
 
-func buildArrayActualResultParameters(field protoreflect.FieldDescriptor, value protoreflect.Value) coverage.ResultParameters {
-	mergedSubResults := map[string]coverage.ResultParameters{}
+func buildArrayActualResultParameters(field protoreflect.FieldDescriptor, value protoreflect.Value) models.ResultParameters {
+	mergedSubResults := map[string]models.ResultParameters{}
 	for index := 0; index < value.List().Len(); index++ {
 		subResults := buildActualResultParameters(value.List().Get(index).Message().Interface())
 
 		for _, subResult := range subResults {
 			if existingResult, exists := mergedSubResults[subResult.Parameter]; exists {
-				mergedSubResults[subResult.Parameter] = coverage.ResultParameters{
+				mergedSubResults[subResult.Parameter] = models.ResultParameters{
 					Covered:    existingResult.Covered || subResult.Covered,
 					Parameter:  subResult.Parameter,
 					Parameters: coverage.MergeResultParameters(existingResult.Parameters, subResult.Parameters),
@@ -89,22 +90,22 @@ func buildArrayActualResultParameters(field protoreflect.FieldDescriptor, value 
 
 	finalSubResults := lo.Values(mergedSubResults)
 
-	return coverage.ResultParameters{
+	return models.ResultParameters{
 		Covered:    len(finalSubResults) > 0,
 		Parameter:  string(field.Name()),
 		Parameters: finalSubResults,
 	}
 }
 
-func getEnumParameters(value protoreflect.EnumNumber, descriptor protoreflect.EnumDescriptor) []coverage.ResultParameters {
-	var enumResults []coverage.ResultParameters
+func getEnumParameters(value protoreflect.EnumNumber, descriptor protoreflect.EnumDescriptor) []models.ResultParameters {
+	var enumResults []models.ResultParameters
 
 	for index := 0; index < descriptor.Values().Len(); index++ {
 		enumValue := descriptor.Values().Get(index)
 		enumCovered := enumValue.Number() == value
 		enumOptions := enumValue.Options().(*descriptorpb.EnumValueOptions)
 
-		enumResults = append(enumResults, coverage.ResultParameters{
+		enumResults = append(enumResults, models.ResultParameters{
 			Covered:    enumCovered,
 			Parameter:  string(enumValue.Name()),
 			Deprecated: enumOptions.GetDeprecated(),
@@ -114,10 +115,10 @@ func getEnumParameters(value protoreflect.EnumNumber, descriptor protoreflect.En
 	return enumResults
 }
 
-func buildEnumActualResultParameters(field protoreflect.FieldDescriptor, value protoreflect.Value) coverage.ResultParameters {
+func buildEnumActualResultParameters(field protoreflect.FieldDescriptor, value protoreflect.Value) models.ResultParameters {
 	enumDescriptor := field.Enum()
 
-	var enumResults []coverage.ResultParameters
+	var enumResults []models.ResultParameters
 	if field.IsList() {
 		for index := 0; index < value.List().Len(); index++ {
 			enumResults = append(enumResults, getEnumParameters(value.List().Get(index).Enum(), enumDescriptor)...)
@@ -131,14 +132,14 @@ func buildEnumActualResultParameters(field protoreflect.FieldDescriptor, value p
 		covered = enumResults[0].Covered
 	}
 
-	return coverage.ResultParameters{
+	return models.ResultParameters{
 		Covered:    covered,
 		Parameter:  string(field.Name()),
 		Parameters: enumResults,
 	}
 }
 
-func buildFieldResult(field protoreflect.FieldDescriptor, value protoreflect.Value) coverage.ResultParameters {
+func buildFieldResult(field protoreflect.FieldDescriptor, value protoreflect.Value) models.ResultParameters {
 	switch {
 	case field.Kind() == protoreflect.MessageKind && field.IsList():
 		return buildArrayActualResultParameters(field, value)
@@ -147,18 +148,18 @@ func buildFieldResult(field protoreflect.FieldDescriptor, value protoreflect.Val
 	case field.Kind() == protoreflect.EnumKind:
 		return buildEnumActualResultParameters(field, value)
 	case field.Kind() == protoreflect.MessageKind:
-		return coverage.ResultParameters{
+		return models.ResultParameters{
 			Covered:    !isDefaultValue(field, value),
 			Parameter:  string(field.Name()),
 			Parameters: buildActualResultParameters(value.Message().Interface()),
 		}
 	default:
-		return coverage.ResultParameters{Covered: !isDefaultValue(field, value), Parameter: string(field.Name())}
+		return models.ResultParameters{Covered: !isDefaultValue(field, value), Parameter: string(field.Name())}
 	}
 }
 
-func buildActualResultParameters(message proto.Message) []coverage.ResultParameters {
-	var results []coverage.ResultParameters
+func buildActualResultParameters(message proto.Message) []models.ResultParameters {
+	var results []models.ResultParameters
 	fields := message.ProtoReflect().Descriptor().Fields()
 
 	for index := 0; index < fields.Len(); index++ {

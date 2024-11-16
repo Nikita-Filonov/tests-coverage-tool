@@ -4,42 +4,44 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/Nikita-Filonov/tests-coverage-tool/tool/models"
 )
 
 type mergeFilteredResultParametersTest struct {
 	name       string
-	want       []ResultParameters
-	parameters [][]ResultParameters
+	want       []models.ResultParameters
+	parameters [][]models.ResultParameters
 }
 
 type getTotalCoverageResultParametersTest struct {
 	name       string
 	want       int
-	parameters []ResultParameters
+	parameters []models.ResultParameters
 }
 
 func TestMergeFilteredResultParameters(t *testing.T) {
 	tests := []mergeFilteredResultParametersTest{
 		{
 			name: "Parameters with multiple level depth",
-			want: []ResultParameters{
+			want: []models.ResultParameters{
 				{
 					Covered:   true,
 					Parameter: "a",
-					Parameters: []ResultParameters{
-						{Covered: true, Parameter: "d", Parameters: []ResultParameters{}},
-						{Covered: true, Parameter: "e", Parameters: []ResultParameters{}},
+					Parameters: []models.ResultParameters{
+						{Covered: true, Parameter: "d", Parameters: []models.ResultParameters{}},
+						{Covered: true, Parameter: "e", Parameters: []models.ResultParameters{}},
 					},
 				},
-				{Covered: true, Parameter: "b", Parameters: []ResultParameters{}},
-				{Covered: true, Parameter: "c", Parameters: []ResultParameters{}},
+				{Covered: true, Parameter: "b", Parameters: []models.ResultParameters{}},
+				{Covered: true, Parameter: "c", Parameters: []models.ResultParameters{}},
 			},
-			parameters: [][]ResultParameters{
+			parameters: [][]models.ResultParameters{
 				{
 					{
 						Covered:   true,
 						Parameter: "a",
-						Parameters: []ResultParameters{
+						Parameters: []models.ResultParameters{
 							{Covered: true, Parameter: "d"},
 							{Covered: false, Parameter: "e"},
 						},
@@ -51,7 +53,7 @@ func TestMergeFilteredResultParameters(t *testing.T) {
 					{
 						Covered:   false,
 						Parameter: "a",
-						Parameters: []ResultParameters{
+						Parameters: []models.ResultParameters{
 							{Covered: false, Parameter: "d"},
 							{Covered: true, Parameter: "e"},
 						},
@@ -83,18 +85,18 @@ func TestGetTotalResultParameters(t *testing.T) {
 		{
 			name:       "Parameters with one level depth",
 			want:       3,
-			parameters: []ResultParameters{{}, {}, {}},
+			parameters: []models.ResultParameters{{}, {}, {}},
 		},
 		{
 			name: "Parameters with multiple level depth",
 			want: 7,
-			parameters: []ResultParameters{
-				{Parameters: []ResultParameters{}},
-				{Parameters: []ResultParameters{}},
+			parameters: []models.ResultParameters{
+				{Parameters: []models.ResultParameters{}},
+				{Parameters: []models.ResultParameters{}},
 				{
-					Parameters: []ResultParameters{
-						{Parameters: []ResultParameters{}},
-						{Parameters: []ResultParameters{{}, {}}},
+					Parameters: []models.ResultParameters{
+						{Parameters: []models.ResultParameters{}},
+						{Parameters: []models.ResultParameters{{}, {}}},
 					},
 				},
 			},
@@ -117,19 +119,19 @@ func TestGetTotalCoveredResultParameters(t *testing.T) {
 		{
 			name:       "Parameters with one level depth",
 			want:       1,
-			parameters: []ResultParameters{{Covered: true}, {}, {}},
+			parameters: []models.ResultParameters{{Covered: true}, {}, {}},
 		},
 		{
 			name: "Parameters with multiple level depth",
 			want: 5,
-			parameters: []ResultParameters{
-				{Covered: true, Parameters: []ResultParameters{}},
-				{Covered: true, Parameters: []ResultParameters{}},
+			parameters: []models.ResultParameters{
+				{Covered: true, Parameters: []models.ResultParameters{}},
+				{Covered: true, Parameters: []models.ResultParameters{}},
 				{
-					Parameters: []ResultParameters{
-						{Covered: true, Parameters: []ResultParameters{}},
-						{Parameters: []ResultParameters{}},
-						{Parameters: []ResultParameters{{Covered: true}, {Covered: true}}},
+					Parameters: []models.ResultParameters{
+						{Covered: true, Parameters: []models.ResultParameters{}},
+						{Parameters: []models.ResultParameters{}},
+						{Parameters: []models.ResultParameters{{Covered: true}, {Covered: true}}},
 					},
 				},
 			},

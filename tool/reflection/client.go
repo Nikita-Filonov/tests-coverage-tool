@@ -23,7 +23,7 @@ type GRPCReflectionClient struct {
 
 func NewGRPCReflectionClient(ctx context.Context, service config.Service) (*GRPCReflectionClient, error) {
 	conn, err := grpc.NewClient(
-		service.Host.String(),
+		service.Host,
 		grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{InsecureSkipVerify: true})),
 	)
 	if err != nil {

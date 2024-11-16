@@ -4,9 +4,11 @@ import (
 	"sort"
 
 	"github.com/samber/lo"
+
+	"github.com/Nikita-Filonov/tests-coverage-tool/tool/models"
 )
 
-func SortResultParameters(params []ResultParameters) {
+func SortResultParameters(params []models.ResultParameters) {
 	sort.Slice(params, func(i, j int) bool {
 		return params[i].Parameter < params[j].Parameter
 	})
@@ -18,7 +20,7 @@ func SortResultParameters(params []ResultParameters) {
 	}
 }
 
-func GetTotalResultParameters(results []ResultParameters) int {
+func GetTotalResultParameters(results []models.ResultParameters) int {
 	if len(results) == 0 {
 		return 0
 	}
@@ -31,12 +33,12 @@ func GetTotalResultParameters(results []ResultParameters) int {
 	return count
 }
 
-func GetTotalCoveredResultParameters(results []ResultParameters) int {
+func GetTotalCoveredResultParameters(results []models.ResultParameters) int {
 	if len(results) == 0 {
 		return 0
 	}
 
-	count := lo.SumBy(results, func(item ResultParameters) int {
+	count := lo.SumBy(results, func(item models.ResultParameters) int {
 		return lo.Ternary(item.Covered, 1, 0)
 	})
 	for _, param := range results {

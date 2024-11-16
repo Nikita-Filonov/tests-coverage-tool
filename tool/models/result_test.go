@@ -1,4 +1,4 @@
-package coverage
+package models
 
 import (
 	"testing"

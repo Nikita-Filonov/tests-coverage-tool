@@ -8,20 +8,28 @@ import (
 
 	"github.com/Nikita-Filonov/tests-coverage-tool/tool/coverage"
 	"github.com/Nikita-Filonov/tests-coverage-tool/tool/coverageinupt"
+	"github.com/Nikita-Filonov/tests-coverage-tool/tool/history"
+	"github.com/Nikita-Filonov/tests-coverage-tool/tool/models"
 	"github.com/Nikita-Filonov/tests-coverage-tool/tool/reflection"
 )
 
 type OutputCoverageClient struct {
 	reflectionClient    reflection.GRPCReflectionClient
+	inputHistoryClient  history.InputHistoryClient
 	inputCoverageClient coverageinupt.InputCoverageClient
 }
 
 func NewOutputCoverageClient(
 	reflectionClient *reflection.GRPCReflectionClient,
+	inputHistoryClient *history.InputHistoryClient,
 	inputCoverageClient *coverageinupt.InputCoverageClient,
 ) (*OutputCoverageClient, error) {
 	if reflectionClient == nil {
 		return nil, fmt.Errorf("reflection client is nil")
+	}
+
+	if inputHistoryClient == nil {
+		return nil, fmt.Errorf("input history client is nil")
 	}
 
 	if inputCoverageClient == nil {
@@ -30,17 +38,20 @@ func NewOutputCoverageClient(
 
 	return &OutputCoverageClient{
 		reflectionClient:    *reflectionClient,
+		inputHistoryClient:  *inputHistoryClient,
 		inputCoverageClient: *inputCoverageClient,
 	}, nil
 }
 
-func (c *OutputCoverageClient) getMethodCoverage(descriptor *desc.MethodDescriptor) MethodCoverage {
+func (c *OutputCoverageClient) getMethodCoverage(descriptor *desc.MethodDescriptor) models.MethodCoverage {
 	var (
 		option                     = descriptor.GetMethodOptions()
 		filters                    = coverageinupt.ResultsFilters{FilterByFullMethod: descriptor.GetFullyQualifiedName()}
 		results                    = c.inputCoverageClient.FilterResults(filters)
 		covered                    = len(results) > 0
 		totalCases                 = len(results)
+		methodName                 = descriptor.GetName()
+		logicalServiceName         = descriptor.GetService().GetFullyQualifiedName()
 		actualRequestParameters    = c.inputCoverageClient.GetMergedRequestParameters(filters)
 		actualResponseParameters   = c.inputCoverageClient.GetMergedResponseParameters(filters)
 		expectedRequestParameters  = reflection.BuildExpectedResultParameters(descriptor.GetInputType().UnwrapMessage())
@@ -52,8 +63,12 @@ func (c *OutputCoverageClient) getMethodCoverage(descriptor *desc.MethodDescript
 		responseTotalParameters        = coverage.GetTotalResultParameters(expectedResponseParameters)
 		requestTotalCoveredParameters  = coverage.GetTotalCoveredResultParameters(actualRequestParameters)
 		responseTotalCoveredParameters = coverage.GetTotalCoveredResultParameters(actualResponseParameters)
-		requestParametersCoverage      []coverage.ResultParameters
-		responseParametersCoverage     []coverage.ResultParameters
+		requestTotalCoverage           = getRequestCoveragePercent(covered, requestTotalParameters, requestTotalCoveredParameters)
+		responseTotalCoverage          = getRequestCoveragePercent(covered, responseTotalParameters, responseTotalCoveredParameters)
+		requestTotalCoverageHistory    = c.inputHistoryClient.BuildMethodHistoryRequestTotalCoverage(logicalServiceName, methodName, requestTotalCoverage)
+		responseTotalCoverageHistory   = c.inputHistoryClient.BuildMethodHistoryResponseTotalCoverage(logicalServiceName, methodName, responseTotalCoverage)
+		requestParametersCoverage      []models.ResultParameters
+		responseParametersCoverage     []models.ResultParameters
 	)
 	if covered {
 		requestParametersCoverage = coverage.MergeResultParameters(expectedRequestParameters, actualRequestParameters)
@@ -63,56 +78,62 @@ func (c *OutputCoverageClient) getMethodCoverage(descriptor *desc.MethodDescript
 	coverage.EnrichSliceWithUncoveredResultParameters(requestParametersCoverage)
 	coverage.EnrichSliceWithUncoveredResultParameters(responseParametersCoverage)
 
-	return MethodCoverage{
+	return models.MethodCoverage{
 		Method:     descriptor.GetName(),
 		Covered:    covered,
 		TotalCases: totalCases,
 		Deprecated: option.GetDeprecated(),
-		RequestCoverage: MethodRequestCoverage{
+		RequestCoverage: models.MethodRequestCoverage{
 			Name:                   descriptor.GetInputType().GetFullyQualifiedName(),
-			TotalCoverage:          getRequestCoveragePercent(covered, requestTotalParameters, requestTotalCoveredParameters),
+			TotalCoverage:          requestTotalCoverage,
 			TotalParameters:        requestTotalParameters,
 			ParametersCoverage:     requestParametersCoverage,
+			TotalCoverageHistory:   requestTotalCoverageHistory,
 			TotalCoveredParameters: requestTotalCoveredParameters,
 		},
-		ResponseCoverage: MethodRequestCoverage{
+		ResponseCoverage: models.MethodRequestCoverage{
 			Name:                   descriptor.GetOutputType().GetFullyQualifiedName(),
-			TotalCoverage:          getRequestCoveragePercent(covered, responseTotalParameters, responseTotalCoveredParameters),
+			TotalCoverage:          responseTotalCoverage,
 			TotalParameters:        responseTotalParameters,
 			ParametersCoverage:     responseParametersCoverage,
+			TotalCoverageHistory:   responseTotalCoverageHistory,
 			TotalCoveredParameters: responseTotalCoveredParameters,
 		},
 	}
 }
 
-func (c *OutputCoverageClient) getLogicalServiceCoverage(logicalService string) (LogicalServiceCoverage, error) {
+func (c *OutputCoverageClient) getLogicalServiceCoverage(logicalService string) (models.LogicalServiceCoverage, error) {
 	filters := coverageinupt.ResultsFilters{FilterByLogicalService: logicalService}
 	resultsMethods := c.inputCoverageClient.GetUniqueMethods(filters)
 
 	reflectionMethodsDescriptors, err := c.reflectionClient.GetServiceMethodsDescriptors(logicalService)
 	if err != nil {
-		return LogicalServiceCoverage{}, err
+		return models.LogicalServiceCoverage{}, err
 	}
 
 	reflectionMethods, err := c.reflectionClient.GetServiceMethods(logicalService)
 	if err != nil {
-		return LogicalServiceCoverage{}, err
+		return models.LogicalServiceCoverage{}, err
 	}
 
-	return LogicalServiceCoverage{
-		Methods:        lo.Map(reflectionMethodsDescriptors, func(item *desc.MethodDescriptor, _ int) MethodCoverage { return c.getMethodCoverage(item) }),
-		TotalCoverage:  getCoveragePercent(reflectionMethods, resultsMethods),
-		LogicalService: logicalService,
+	totalCoverage := getCoveragePercent(reflectionMethods, resultsMethods)
+	totalCoverageHistory := c.inputHistoryClient.BuildLogicalServiceHistoryTotalCoverage(logicalService, totalCoverage)
+
+	return models.LogicalServiceCoverage{
+		Methods:              lo.Map(reflectionMethodsDescriptors, func(item *desc.MethodDescriptor, _ int) models.MethodCoverage { return c.getMethodCoverage(item) }),
+		TotalCoverage:        totalCoverage,
+		LogicalService:       logicalService,
+		TotalCoverageHistory: totalCoverageHistory,
 	}, nil
 }
 
-func (c *OutputCoverageClient) GetLogicalServiceCoverages() ([]LogicalServiceCoverage, error) {
+func (c *OutputCoverageClient) GetLogicalServiceCoverages() ([]models.LogicalServiceCoverage, error) {
 	logicalServices, err := c.reflectionClient.GetServices()
 	if err != nil {
 		return nil, err
 	}
 
-	coverages := make([]LogicalServiceCoverage, len(logicalServices))
+	coverages := make([]models.LogicalServiceCoverage, len(logicalServices))
 	for index, logicalService := range logicalServices {
 		if serviceCoverage, err := c.getLogicalServiceCoverage(logicalService); err == nil {
 			coverages[index] = serviceCoverage
@@ -122,10 +143,10 @@ func (c *OutputCoverageClient) GetLogicalServiceCoverages() ([]LogicalServiceCov
 	return coverages, nil
 }
 
-func (c *OutputCoverageClient) GetServiceCoverage() (ServiceCoverage, error) {
+func (c *OutputCoverageClient) GetServiceCoverage() (models.ServiceCoverage, error) {
 	logicalServices, err := c.reflectionClient.GetServices()
 	if err != nil {
-		return ServiceCoverage{}, err
+		return models.ServiceCoverage{}, err
 	}
 
 	var (
@@ -138,13 +159,17 @@ func (c *OutputCoverageClient) GetServiceCoverage() (ServiceCoverage, error) {
 
 		methods, err := c.reflectionClient.GetServiceMethods(logicalService)
 		if err != nil {
-			return ServiceCoverage{}, err
+			return models.ServiceCoverage{}, err
 		}
 
 		reflectionMethods = append(reflectionMethods, methods...)
 	}
 
-	return ServiceCoverage{
-		TotalCoverage: getCoveragePercent(reflectionMethods, resultsMethods),
+	totalCoverage := getCoveragePercent(reflectionMethods, resultsMethods)
+	totalCoverageHistory := c.inputHistoryClient.BuildServiceHistoryTotalCoverage(totalCoverage)
+
+	return models.ServiceCoverage{
+		TotalCoverage:        totalCoverage,
+		TotalCoverageHistory: totalCoverageHistory,
 	}, nil
 }

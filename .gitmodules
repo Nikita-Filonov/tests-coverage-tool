@@ -1,4 +1,4 @@
 [submodule "submodules/tests-coverage-report"]
 	path = submodules/tests-coverage-report
 	url = https://github.com/Nikita-Filonov/tests-coverage-report
-	tag = v5.0.0
+	tag = v6.0.0

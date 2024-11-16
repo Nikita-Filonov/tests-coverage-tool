@@ -7,6 +7,7 @@ import (
 
 	"github.com/Nikita-Filonov/tests-coverage-tool/tool/config"
 	"github.com/Nikita-Filonov/tests-coverage-tool/tool/logger"
+	"github.com/Nikita-Filonov/tests-coverage-tool/tool/models"
 	"github.com/Nikita-Filonov/tests-coverage-tool/tool/utils"
 )
 
@@ -14,16 +15,16 @@ import (
 var indexHTML string
 
 type CoverageReportClient struct {
-	state  CoverageReportState
+	state  models.CoverageState
 	config config.Config
 }
 
-func NewCoverageReportClient(conf config.Config, state CoverageReportState) CoverageReportClient {
+func NewCoverageReportClient(conf config.Config, state models.CoverageState) CoverageReportClient {
 	return CoverageReportClient{config: conf, state: state}
 }
 
 func (c CoverageReportClient) getIndexHTMLFileWithState() (string, error) {
-	stateJSON, err := c.state.getStateJSON()
+	stateJSON, err := c.state.GetReportStateJSON()
 	if err != nil {
 		return "", err
 	}
@@ -39,6 +40,11 @@ func (c CoverageReportClient) SaveHTMLReport() error {
 
 	if c.config.HTMLReportDir == "" {
 		logger.EnvVariableEmptySkipping(config.HTMLReportDir.String())
+		return nil
+	}
+
+	if c.config.HTMLReportFile == "" {
+		logger.EnvVariableEmptySkipping(config.HTMLReportFile.String())
 		return nil
 	}
 
@@ -65,7 +71,12 @@ func (c CoverageReportClient) SaveJSONReport() error {
 		return nil
 	}
 
-	err := utils.SaveJSONFile(c.state.getState(), c.config.JSONReportDir, c.config.JSONReportFile)
+	if c.config.JSONReportFile == "" {
+		logger.EnvVariableEmptySkipping(config.JSONReportFile.String())
+		return nil
+	}
+
+	err := utils.SaveJSONFile(c.state, c.config.JSONReportDir, c.config.JSONReportFile)
 	if err != nil {
 		logger.ErrorMakingReport("HTML")
 		return err

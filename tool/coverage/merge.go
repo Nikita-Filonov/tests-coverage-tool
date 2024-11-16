@@ -2,14 +2,16 @@ package coverage
 
 import (
 	"github.com/samber/lo"
+
+	"github.com/Nikita-Filonov/tests-coverage-tool/tool/models"
 )
 
-func MergeResultParameters(master, replica []ResultParameters) []ResultParameters {
-	mergedMap := lo.SliceToMap(master, func(item ResultParameters) (string, ResultParameters) { return item.Parameter, item })
+func MergeResultParameters(master, replica []models.ResultParameters) []models.ResultParameters {
+	mergedMap := lo.SliceToMap(master, func(item models.ResultParameters) (string, models.ResultParameters) { return item.Parameter, item })
 
 	for _, param := range replica {
 		if existingParam, exists := mergedMap[param.Parameter]; exists {
-			mergedMap[param.Parameter] = ResultParameters{
+			mergedMap[param.Parameter] = models.ResultParameters{
 				Covered:    existingParam.Covered || param.Covered,
 				Parameter:  param.Parameter,
 				Parameters: MergeResultParameters(existingParam.Parameters, param.Parameters),
@@ -23,7 +25,7 @@ func MergeResultParameters(master, replica []ResultParameters) []ResultParameter
 	return lo.Values(mergedMap)
 }
 
-func MergeFilteredResultParameters(results [][]ResultParameters) []ResultParameters {
+func MergeFilteredResultParameters(results [][]models.ResultParameters) []models.ResultParameters {
 	if len(results) == 0 {
 		return nil
 	}

@@ -12,6 +12,37 @@ type configTest[T any] struct {
 	config Config
 }
 
+func TestConfigValidate(t *testing.T) {
+	tests := []configTest[error]{
+		{
+			name:   "Empty config",
+			want:   nil,
+			config: Config{},
+		},
+		{
+			name:   "Valid services",
+			want:   nil,
+			config: Config{Services: []Service{{Key: "1"}, {Key: "2"}}},
+		},
+		{
+			name:   "Services with empty keys",
+			want:   ServiceKeysShouldNotContainEmptyValuesError,
+			config: Config{Services: []Service{{}, {}}},
+		},
+		{
+			name:   "Services with duplicated keys",
+			want:   DuplicateServiceKeysFoundInConfigurationError,
+			config: Config{Services: []Service{{Key: "1"}, {Key: "1"}}},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.want, test.config.validate())
+		})
+	}
+}
+
 func TestConfigGetResultsDir(t *testing.T) {
 	tests := []configTest[string]{
 		{
@@ -29,6 +60,27 @@ func TestConfigGetResultsDir(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			assert.Equal(t, test.want, test.config.GetResultsDir())
+		})
+	}
+}
+
+func TestConfigGetHistoryFile(t *testing.T) {
+	tests := []configTest[string]{
+		{
+			name:   "History dir set, history file set",
+			want:   "./history.json",
+			config: Config{HistoryDir: ".", HistoryFile: "history.json"},
+		},
+		{
+			name:   "History dir unset, history file unset",
+			want:   "/",
+			config: Config{},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.want, test.config.GetHistoryFile())
 		})
 	}
 }

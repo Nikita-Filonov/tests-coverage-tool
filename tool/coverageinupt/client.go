@@ -5,13 +5,14 @@ import (
 	"os"
 
 	"github.com/Nikita-Filonov/tests-coverage-tool/tool/coverage"
+	"github.com/Nikita-Filonov/tests-coverage-tool/tool/models"
 	"github.com/Nikita-Filonov/tests-coverage-tool/tool/utils"
 
 	"github.com/samber/lo"
 )
 
 type InputCoverageClient struct {
-	results []coverage.Result
+	results []models.Result
 }
 
 type ResultsFilters struct {
@@ -19,7 +20,7 @@ type ResultsFilters struct {
 	FilterByLogicalService string
 }
 
-func (f ResultsFilters) getFilter(result coverage.Result) bool {
+func (f ResultsFilters) getFilter(result models.Result) bool {
 	if f.FilterByFullMethod != "" {
 		return result.Method == f.FilterByFullMethod
 	}
@@ -43,9 +44,9 @@ func NewInputCoverageClient(resultsDir string) (*InputCoverageClient, error) {
 		return nil, err
 	}
 
-	var results []coverage.Result
+	var results []models.Result
 	for _, file := range files {
-		result, err := utils.ReadJSONFile[coverage.Result]("%s/%s", resultsDir, file.Name())
+		result, err := utils.ReadJSONFile[models.Result]("%s/%s", resultsDir, file.Name())
 		if err != nil {
 			log.Printf("Error reading input coverage result from file %s: %v", file.Name(), err)
 			continue
@@ -57,33 +58,33 @@ func NewInputCoverageClient(resultsDir string) (*InputCoverageClient, error) {
 	return &InputCoverageClient{results: results}, nil
 }
 
-func (c InputCoverageClient) FilterResults(filters ResultsFilters) []coverage.Result {
-	return lo.Filter(c.results, func(item coverage.Result, _ int) bool { return filters.getFilter(item) })
+func (c InputCoverageClient) FilterResults(filters ResultsFilters) []models.Result {
+	return lo.Filter(c.results, func(item models.Result, _ int) bool { return filters.getFilter(item) })
 }
 
 func (c InputCoverageClient) GetMethods(filters ResultsFilters) []string {
 	results := c.FilterResults(filters)
-	return lo.Map(results, func(item coverage.Result, _ int) string { return item.Method })
+	return lo.Map(results, func(item models.Result, _ int) string { return item.Method })
 }
 
 func (c InputCoverageClient) GetUniqueMethods(filters ResultsFilters) []string {
 	return lo.Uniq(c.GetMethods(filters))
 }
 
-func (c InputCoverageClient) GetRequestParameters(filters ResultsFilters) [][]coverage.ResultParameters {
+func (c InputCoverageClient) GetRequestParameters(filters ResultsFilters) [][]models.ResultParameters {
 	results := c.FilterResults(filters)
-	return lo.Map(results, func(item coverage.Result, _ int) []coverage.ResultParameters { return item.Request })
+	return lo.Map(results, func(item models.Result, _ int) []models.ResultParameters { return item.Request })
 }
 
-func (c InputCoverageClient) GetResponseParameters(filters ResultsFilters) [][]coverage.ResultParameters {
+func (c InputCoverageClient) GetResponseParameters(filters ResultsFilters) [][]models.ResultParameters {
 	results := c.FilterResults(filters)
-	return lo.Map(results, func(item coverage.Result, _ int) []coverage.ResultParameters { return item.Response })
+	return lo.Map(results, func(item models.Result, _ int) []models.ResultParameters { return item.Response })
 }
 
-func (c InputCoverageClient) GetMergedRequestParameters(filters ResultsFilters) []coverage.ResultParameters {
+func (c InputCoverageClient) GetMergedRequestParameters(filters ResultsFilters) []models.ResultParameters {
 	return coverage.MergeFilteredResultParameters(c.GetRequestParameters(filters))
 }
 
-func (c InputCoverageClient) GetMergedResponseParameters(filters ResultsFilters) []coverage.ResultParameters {
+func (c InputCoverageClient) GetMergedResponseParameters(filters ResultsFilters) []models.ResultParameters {
 	return coverage.MergeFilteredResultParameters(c.GetResponseParameters(filters))
 }
