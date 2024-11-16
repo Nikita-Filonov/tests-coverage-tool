@@ -22,7 +22,7 @@ go.work
 
 coverage-results
 
-!/examples/index.html
+!/docs/index.html
 !/tool/report/templates/index.html
 
 .idea
