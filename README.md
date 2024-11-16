@@ -16,6 +16,20 @@ your tests thoroughly validate your gRPC endpoints. The tool gathers the followi
 - **Support for Multiple Services:** The tool can handle coverage reporting for multiple gRPC services within a single
   project.
 
+## Preview
+
+### Service coverage
+
+![Service coverage](docs/preview_service_coverage.png "Service coverage")
+
+### Logical services coverage
+
+![Logical services coverage](docs/preview_logical_services_coverage.png "Logical services coverage")
+
+### Method coverage
+
+![Method coverage](docs/preview_method_coverage.png "Method coverage")
+
 You can see a report example [here](https://nikita-filonov.github.io/tests-coverage-tool/).
 
 If you have any questions, you can ask [@Nikita Filonov](https://t.me/sound_right)
