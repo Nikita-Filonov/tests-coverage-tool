@@ -117,6 +117,40 @@ tests-coverage-tool save-report
 
 This will generate a coverage report based on the results gathered during your test runs.
 
+### State
+
+The library includes a built-in function, `report.ReadCoverageReportState`, which simplifies reading the state from a
+JSON coverage report. This function serves as a helper for analytics and reporting purposes, allowing users to
+efficiently manage the output of a JSON coverage report
+
+Here’s an example of how to use it:
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+
+	"github.com/Nikita-Filonov/tests-coverage-tool/tool/report"
+)
+
+func main() {
+	// Read the coverage report state from the JSON file
+	state, err := report.ReadCoverageReportState()
+	if err != nil {
+		log.Fatalf("Error reading coverage report state: %v\n", err)
+	}
+
+	// Perform actions with the coverage state
+	fmt.Println(state)
+}
+
+```
+
+In this example, the `ReadCoverageReportState` function reads the JSON coverage report, and you can then process the
+state variable for further analytics or reporting
+
 ## Config
 
 The tool can be configured via environment variables or a YAML configuration file. Below are the available options:

@@ -22,11 +22,11 @@ go.work
 
 coverage-results
 
-!/docs/index.html
-!/tool/report/templates/index.html
-
 .idea
 .DS_Store
 
 *.json
 *.html
+
+!docs/index.html
+!tool/report/templates/index.html

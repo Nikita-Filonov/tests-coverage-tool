@@ -121,8 +121,10 @@ func (c *OutputCoverageClient) getLogicalServiceCoverage(logicalService string) 
 
 	return models.LogicalServiceCoverage{
 		Methods:              lo.Map(reflectionMethodsDescriptors, func(item *desc.MethodDescriptor, _ int) models.MethodCoverage { return c.getMethodCoverage(item) }),
+		TotalMethods:         len(reflectionMethods),
 		TotalCoverage:        totalCoverage,
 		LogicalService:       logicalService,
+		TotalCoveredMethods:  len(resultsMethods),
 		TotalCoverageHistory: totalCoverageHistory,
 	}, nil
 }

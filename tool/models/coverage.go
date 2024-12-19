@@ -20,8 +20,10 @@ type MethodCoverage struct {
 
 type LogicalServiceCoverage struct {
 	Methods              []MethodCoverage  `json:"methods,omitempty"`
+	TotalMethods         int               `json:"totalMethods,omitempty"`
 	TotalCoverage        float64           `json:"totalCoverage,omitempty"`
 	LogicalService       string            `json:"logicalService"`
+	TotalCoveredMethods  int               `json:"totalCoveredMethods,omitempty"`
 	TotalCoverageHistory []CoverageHistory `json:"totalCoverageHistory,omitempty"`
 }
 
