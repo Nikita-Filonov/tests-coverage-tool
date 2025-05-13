@@ -23,6 +23,7 @@ type Service struct {
 	Key        ServiceKey `json:"key" yaml:"key"`
 	Name       string     `json:"name" yaml:"name"`
 	Host       string     `json:"host" yaml:"host"`
+	Tags       []string   `json:"tags" yaml:"tags,omitempty"`
 	Repository string     `json:"repository" yaml:"repository"`
 }
 
