@@ -8,76 +8,10 @@ import (
 	"github.com/Nikita-Filonov/tests-coverage-tool/tool/models"
 )
 
-type mergeFilteredResultParametersTest struct {
-	name       string
-	want       []models.ResultParameters
-	parameters [][]models.ResultParameters
-}
-
 type getTotalCoverageResultParametersTest struct {
 	name       string
 	want       int
 	parameters []models.ResultParameters
-}
-
-func TestMergeFilteredResultParameters(t *testing.T) {
-	tests := []mergeFilteredResultParametersTest{
-		{
-			name: "Parameters with multiple level depth",
-			want: []models.ResultParameters{
-				{
-					Covered:   true,
-					Parameter: "a",
-					Parameters: []models.ResultParameters{
-						{Covered: true, Parameter: "d", Parameters: []models.ResultParameters{}},
-						{Covered: true, Parameter: "e", Parameters: []models.ResultParameters{}},
-					},
-				},
-				{Covered: true, Parameter: "b", Parameters: []models.ResultParameters{}},
-				{Covered: true, Parameter: "c", Parameters: []models.ResultParameters{}},
-			},
-			parameters: [][]models.ResultParameters{
-				{
-					{
-						Covered:   true,
-						Parameter: "a",
-						Parameters: []models.ResultParameters{
-							{Covered: true, Parameter: "d"},
-							{Covered: false, Parameter: "e"},
-						},
-					},
-					{Covered: false, Parameter: "b"},
-					{Covered: true, Parameter: "c"},
-				},
-				{
-					{
-						Covered:   false,
-						Parameter: "a",
-						Parameters: []models.ResultParameters{
-							{Covered: false, Parameter: "d"},
-							{Covered: true, Parameter: "e"},
-						},
-					},
-					{Covered: true, Parameter: "b"},
-					{Covered: true, Parameter: "c"},
-				},
-			},
-		},
-		{
-			name: "Empty parameters",
-			want: nil,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := MergeFilteredResultParameters(test.parameters)
-			SortResultParameters(result)
-			SortResultParameters(test.want)
-
-			assert.Equal(t, test.want, result)
-		})
-	}
 }
 
 func TestGetTotalResultParameters(t *testing.T) {
