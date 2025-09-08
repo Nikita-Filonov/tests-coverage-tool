@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	ServiceKeysShouldNotContainEmptyValuesError   = errors.New("service keys should not contain empty values")
-	DuplicateServiceKeysFoundInConfigurationError = errors.New("duplicate service keys found in configuration")
+	ErrServiceKeysShouldNotContainEmptyValues   = errors.New("service keys should not contain empty values")
+	ErrDuplicateServiceKeysFoundInConfiguration = errors.New("duplicate service keys found in configuration")
 )
 
 type ServiceKey string
@@ -69,11 +69,11 @@ func (c *Config) validate() error {
 	serviceKeys := lo.Map(c.Services, func(s Service, _ int) ServiceKey { return s.Key })
 
 	if lo.Contains(serviceKeys, "") {
-		return ServiceKeysShouldNotContainEmptyValuesError
+		return ErrServiceKeysShouldNotContainEmptyValues
 	}
 
 	if len(c.Services) != len(lo.Uniq(serviceKeys)) {
-		return DuplicateServiceKeysFoundInConfigurationError
+		return ErrDuplicateServiceKeysFoundInConfiguration
 	}
 
 	return nil
