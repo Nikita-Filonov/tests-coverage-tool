@@ -7,69 +7,69 @@ import (
 	"os"
 )
 
-func ReadFile(filename string, a ...any) ([]byte, error) {
-	respFile, err := os.Open(fmt.Sprintf(filename, a...))
+func ReadFile(file string) ([]byte, error) {
+	f, err := os.Open(file)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open file %s: %w", file, err)
 	}
-	defer respFile.Close()
+	defer func() { _ = f.Close() }()
 
-	bytes, err := io.ReadAll(respFile)
+	data, err := io.ReadAll(f)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read file %s: %w", file, err)
 	}
 
-	return bytes, nil
+	return data, nil
 }
 
 func SaveFile(input []byte, dir, filename string) error {
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-		return fmt.Errorf("failed to create directory %s", dir)
+		return fmt.Errorf("failed to create directory %s: %w", dir, err)
 	}
 
 	filename = fmt.Sprintf("%s/%s", dir, filename)
 
-	file, err := os.Create(filename)
+	f, err := os.Create(filename)
 	if err != nil {
-		return fmt.Errorf("failed to create file %s", filename)
+		return fmt.Errorf("failed to create file %s: %w", filename, err)
 	}
-	defer file.Close()
+	defer func() { _ = f.Close() }()
 
-	if _, err = file.Write(input); err != nil {
-		return fmt.Errorf("failed to save file content %s", filename)
+	if _, err = f.Write(input); err != nil {
+		return fmt.Errorf("failed to save file content %s: %w", filename, err)
 	}
 
 	return nil
 }
 
 func CopyFile(source, destination string) error {
-	sourceFile, err := os.Open(source)
+	sf, err := os.Open(source)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open source file %s: %w", source, err)
 	}
-	defer sourceFile.Close()
+	defer func() { _ = sf.Close() }()
 
-	destFile, err := os.Create(destination)
+	df, err := os.Create(destination)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create destination file %s: %w", destination, err)
 	}
-	defer destFile.Close()
+	defer func() { _ = df.Close() }()
 
-	_, err = io.Copy(destFile, sourceFile)
+	_, err = io.Copy(df, sf)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to copy from %s to %s: %w", source, destination, err)
 	}
 
-	err = destFile.Sync()
+	err = df.Sync()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to sync file %s: %w", destination, err)
 	}
 
 	return nil
 }
 
-func ReadJSONFile[T any](path string, a ...any) (*T, error) {
-	byteValue, err := ReadFile(path, a...)
+func ReadJSONFile[T any](file string) (*T, error) {
+	byteValue, err := ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func ReadJSONFile[T any](path string, a ...any) (*T, error) {
 	var dst T
 	err = json.Unmarshal(byteValue, &dst)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarshal JSON from %s: %w", file, err)
 	}
 
 	return &dst, nil
@@ -86,7 +86,7 @@ func ReadJSONFile[T any](path string, a ...any) (*T, error) {
 func SaveJSONFile(input any, dir, filename string) error {
 	data, err := json.Marshal(input)
 	if err != nil {
-		return fmt.Errorf("error marshaling struct to JSON: %v", err)
+		return fmt.Errorf("error marshaling struct to JSON: %w", err)
 	}
 
 	return SaveFile(data, dir, filename)
