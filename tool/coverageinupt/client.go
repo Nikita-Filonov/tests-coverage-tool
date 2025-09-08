@@ -1,6 +1,7 @@
 package coverageinupt
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -37,7 +38,7 @@ func NewInputCoverageClient(resultsDir string) (*InputCoverageClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer dir.Close()
+	defer func() { _ = dir.Close() }()
 
 	files, err := dir.Readdir(-1)
 	if err != nil {
@@ -46,7 +47,7 @@ func NewInputCoverageClient(resultsDir string) (*InputCoverageClient, error) {
 
 	var results []models.Result
 	for _, file := range files {
-		result, err := utils.ReadJSONFile[models.Result]("%s/%s", resultsDir, file.Name())
+		result, err := utils.ReadJSONFile[models.Result](fmt.Sprintf("%s/%s", resultsDir, file.Name()))
 		if err != nil {
 			log.Printf("Error reading input coverage result from file %s: %v", file.Name(), err)
 			continue
