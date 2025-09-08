@@ -3,7 +3,7 @@ package coverageoutput
 import (
 	"fmt"
 
-	"github.com/jhump/protoreflect/desc"
+	"github.com/jhump/protoreflect/desc" //nolint:staticcheck
 	"github.com/samber/lo"
 
 	"github.com/Nikita-Filonov/tests-coverage-tool/tool/coverage"
