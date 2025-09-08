@@ -56,7 +56,12 @@ func isMessageDefault(message protoreflect.Message) bool {
 
 func buildMapActualResultParameters(field protoreflect.FieldDescriptor, value protoreflect.Value) models.ResultParameters {
 	var subResults []models.ResultParameters
-	value.Map().Range(func(k protoreflect.MapKey, v protoreflect.Value) bool {
+	value.Map().Range(func(_ protoreflect.MapKey, v protoreflect.Value) bool {
+		if _, ok := v.Interface().(proto.Message); !ok {
+			// Skipping key as value is not a proto message
+			return true
+		}
+
 		subMessage := v.Message()
 		subResults = append(subResults, buildActualResultParameters(subMessage.Interface())...)
 		return true
