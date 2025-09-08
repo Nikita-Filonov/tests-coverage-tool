@@ -26,12 +26,12 @@ func TestConfigValidate(t *testing.T) {
 		},
 		{
 			name:   "Services with empty keys",
-			want:   ServiceKeysShouldNotContainEmptyValuesError,
+			want:   ErrServiceKeysShouldNotContainEmptyValues,
 			config: Config{Services: []Service{{}, {}}},
 		},
 		{
 			name:   "Services with duplicated keys",
-			want:   DuplicateServiceKeysFoundInConfigurationError,
+			want:   ErrDuplicateServiceKeysFoundInConfiguration,
 			config: Config{Services: []Service{{Key: "1"}, {Key: "1"}}},
 		},
 	}
