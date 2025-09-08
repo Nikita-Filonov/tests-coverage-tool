@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jhump/protoreflect/desc"
-	"github.com/jhump/protoreflect/grpcreflect"
+	"github.com/jhump/protoreflect/desc"        //nolint:staticcheck
+	"github.com/jhump/protoreflect/grpcreflect" //nolint:staticcheck
 	"github.com/samber/lo"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
