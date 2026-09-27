@@ -46,6 +46,12 @@ func (c *GRPCReflectionClient) GetServices() ([]string, error) {
 	}), nil
 }
 
+// Close releases the reflection stream and its underlying gRPC connection.
+func (c *GRPCReflectionClient) Close() error {
+	c.reflectionClient.Reset()
+	return c.conn.Close()
+}
+
 func (c *GRPCReflectionClient) GetServiceDescriptor(service string) (*desc.ServiceDescriptor, error) {
 	return c.reflectionClient.ResolveService(service)
 }
