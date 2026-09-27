@@ -10,7 +10,7 @@ import (
 )
 
 func getProtoMessage(input interface{}) proto.Message {
-	if message, ok := input.(proto.Message); ok {
+	if message, ok := input.(proto.Message); ok && message != nil && message.ProtoReflect().IsValid() {
 		return message
 	}
 
