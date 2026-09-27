@@ -32,7 +32,7 @@ func (c CoverageReportClient) getIndexHTMLFileWithState() (string, error) {
 	scriptRegex := regexp.MustCompile(`<script id="state" type="application/json">[\s\S]*?<\/script>`)
 	scriptTag := fmt.Sprintf(`<script id="state" type="application/json">%s</script>`, stateJSON)
 
-	return scriptRegex.ReplaceAllString(indexHTML, scriptTag), nil
+	return scriptRegex.ReplaceAllStringFunc(indexHTML, func(string) string { return scriptTag }), nil
 }
 
 func (c CoverageReportClient) SaveHTMLReport() error {
@@ -78,7 +78,7 @@ func (c CoverageReportClient) SaveJSONReport() error {
 
 	err := utils.SaveJSONFile(c.state, c.config.JSONReportDir, c.config.JSONReportFile)
 	if err != nil {
-		logger.ErrorMakingReport("HTML")
+		logger.ErrorMakingReport("JSON")
 		return err
 	}
 
