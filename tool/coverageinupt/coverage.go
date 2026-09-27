@@ -24,7 +24,7 @@ func isDefaultValue(field protoreflect.FieldDescriptor, value protoreflect.Value
 		return !value.Bool()
 	case protoreflect.EnumKind:
 		return value.Enum() == field.Enum().Values().Get(0).Number()
-	case protoreflect.FloatKind:
+	case protoreflect.FloatKind, protoreflect.DoubleKind:
 		return value.Float() == 0.0
 	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind, protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
 		return value.Int() == 0
@@ -55,22 +55,22 @@ func isMessageDefault(message protoreflect.Message) bool {
 }
 
 func buildMapActualResultParameters(field protoreflect.FieldDescriptor, value protoreflect.Value) models.ResultParameters {
-	var subResults []models.ResultParameters
+	var subResults [][]models.ResultParameters
 	value.Map().Range(func(_ protoreflect.MapKey, v protoreflect.Value) bool {
-		if _, ok := v.Interface().(proto.Message); !ok {
+		if field.MapValue().Kind() != protoreflect.MessageKind {
 			// Skipping key as value is not a proto message
 			return true
 		}
 
 		subMessage := v.Message()
-		subResults = append(subResults, buildActualResultParameters(subMessage.Interface())...)
+		subResults = append(subResults, buildActualResultParameters(subMessage.Interface()))
 		return true
 	})
 
 	return models.ResultParameters{
 		Covered:    !isDefaultValue(field, value),
 		Parameter:  string(field.Name()),
-		Parameters: subResults,
+		Parameters: coverage.MergeFilteredResultParameters(subResults),
 	}
 }
 
@@ -96,7 +96,7 @@ func buildArrayActualResultParameters(field protoreflect.FieldDescriptor, value 
 	finalSubResults := lo.Values(mergedSubResults)
 
 	return models.ResultParameters{
-		Covered:    len(finalSubResults) > 0,
+		Covered:    !isDefaultValue(field, value),
 		Parameter:  string(field.Name()),
 		Parameters: finalSubResults,
 	}
@@ -126,7 +126,7 @@ func buildEnumActualResultParameters(field protoreflect.FieldDescriptor, value p
 	var enumResults []models.ResultParameters
 	if field.IsList() {
 		for index := 0; index < value.List().Len(); index++ {
-			enumResults = append(enumResults, getEnumParameters(value.List().Get(index).Enum(), enumDescriptor)...)
+			enumResults = coverage.MergeResultParameters(enumResults, getEnumParameters(value.List().Get(index).Enum(), enumDescriptor))
 		}
 	} else {
 		enumResults = append(enumResults, getEnumParameters(value.Enum(), enumDescriptor)...)
@@ -164,6 +164,10 @@ func buildFieldResult(field protoreflect.FieldDescriptor, value protoreflect.Val
 }
 
 func buildActualResultParameters(message proto.Message) []models.ResultParameters {
+	if message == nil || !message.ProtoReflect().IsValid() {
+		return nil
+	}
+
 	var results []models.ResultParameters
 	fields := message.ProtoReflect().Descriptor().Fields()
 
