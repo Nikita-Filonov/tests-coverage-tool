@@ -137,9 +137,11 @@ func (c *OutputCoverageClient) GetLogicalServiceCoverages() ([]models.LogicalSer
 
 	coverages := make([]models.LogicalServiceCoverage, len(logicalServices))
 	for index, logicalService := range logicalServices {
-		if serviceCoverage, err := c.getLogicalServiceCoverage(logicalService); err == nil {
-			coverages[index] = serviceCoverage
+		serviceCoverage, err := c.getLogicalServiceCoverage(logicalService)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get coverage for %s: %w", logicalService, err)
 		}
+		coverages[index] = serviceCoverage
 	}
 
 	return coverages, nil
