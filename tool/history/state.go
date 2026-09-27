@@ -1,6 +1,7 @@
 package history
 
 import (
+	"errors"
 	"os"
 
 	"github.com/Nikita-Filonov/tests-coverage-tool/tool/config"
@@ -22,7 +23,7 @@ func ReadHistoryState(conf config.Config) (models.HistoryState, error) {
 
 	state, err := utils.ReadJSONFile[models.HistoryState](conf.GetHistoryFile())
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			return models.HistoryState{}, nil
 		}
 
