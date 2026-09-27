@@ -1,24 +1,22 @@
 version: "2"
 
 run:
-  timeout:     5m
-  concurrency: 4
+  timeout: 5m
 
 formatters:
   enable:
     - gofmt
-  settings:
-    gofmt:
-      simplify: true
 
 linters:
+  default: standard
   enable:
-    - govet
-    - unused
     - gocyclo
-    - errcheck
-    - staticcheck
+    - ineffassign
+    - misspell
+  settings:
+    gocyclo:
+      min-complexity: 15
 
 issues:
-  max-same-issues:       30
-  max-issues-per-linter: 30
+  max-same-issues: 0
+  max-issues-per-linter: 0

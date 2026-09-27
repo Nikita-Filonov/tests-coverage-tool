@@ -30,3 +30,6 @@ coverage-results
 
 !docs/index.html
 !tool/report/templates/index.html
+
+# Local developer tools
+.bin/
