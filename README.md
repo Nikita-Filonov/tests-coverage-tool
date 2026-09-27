@@ -1,4 +1,12 @@
-# Tests coverage tool
+# Tests Coverage Tool
+
+[![CI](https://github.com/Nikita-Filonov/tests-coverage-tool/actions/workflows/go-ci.yaml/badge.svg)](https://github.com/Nikita-Filonov/tests-coverage-tool/actions/workflows/go-ci.yaml)
+[![codecov](https://codecov.io/gh/Nikita-Filonov/tests-coverage-tool/branch/main/graph/badge.svg)](https://codecov.io/gh/Nikita-Filonov/tests-coverage-tool)
+[![Go version](https://img.shields.io/github/go-mod/go-version/Nikita-Filonov/tests-coverage-tool)](https://go.dev/dl/)
+[![Go Reference](https://pkg.go.dev/badge/github.com/Nikita-Filonov/tests-coverage-tool.svg)](https://pkg.go.dev/github.com/Nikita-Filonov/tests-coverage-tool)
+[![Release](https://img.shields.io/github/v/release/Nikita-Filonov/tests-coverage-tool)](https://github.com/Nikita-Filonov/tests-coverage-tool/releases)
+[![License](https://img.shields.io/github/license/Nikita-Filonov/tests-coverage-tool)](./LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/Nikita-Filonov/tests-coverage-tool?style=social)](https://github.com/Nikita-Filonov/tests-coverage-tool/stargazers)
 
 The Tests Coverage Tool is a comprehensive utility designed to measure code coverage for gRPC services based on their
 proto contracts. It provides detailed insights into various aspects of your service's coverage, helping you ensure that
@@ -38,18 +46,21 @@ If you have any questions, you can ask [@Nikita Filonov](https://t.me/sound_righ
 
 ## Installation
 
-To install the Tests Coverage Tool, use the following command:
+Requires Go 1.27 or newer. Use the latest patch release of your Go version.
 
-````shell
+To add the library to your test project, run:
+
+```shell
 go get github.com/Nikita-Filonov/tests-coverage-tool@latest
 
-````
+```
 
 ## Usage
 
 ### Client interceptor
 
-Below is an example of how to set up the gRPC client with the coverage interceptor:
+Below is an example of how to set up the gRPC client with the coverage interceptor. Replace `servicev1` with your
+generated protobuf package. TLS uses the system certificate pool; configure `RootCAs` for a private certificate authority.
 
 ```go
 package test
@@ -58,10 +69,8 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"log"
 	"testing"
 
-	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
@@ -70,18 +79,13 @@ import (
 
 func TestGRPC(t *testing.T) {
 	// Set up a gRPC client connection with the coverage interceptor
-	conn, err := grpc.Dial(
+	conn, err := grpc.NewClient(
 		"localhost:1000",
-		grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{InsecureSkipVerify: true})),
-		grpc.WithUnaryInterceptor(
-			grpcmiddleware.ChainUnaryClient(
-				// Integrate the CoverageInterceptor to track method coverage
-				coverageinupt.CoverageInterceptor(),
-			),
-		),
+		grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS12})),
+		grpc.WithChainUnaryInterceptor(coverageinupt.CoverageInterceptor()),
 	)
 	if err != nil {
-		log.Fatalf("Failed to connect to gRPC server: %v", err)
+		t.Fatalf("Failed to create gRPC client: %v", err)
 	}
 	defer conn.Close()
 
@@ -105,7 +109,7 @@ measure service coverage.
 To install the tool, run:
 
 ```shell
-go install github.com/Nikita-Filonov/tests-coverage-tool/...@latest
+go install github.com/Nikita-Filonov/tests-coverage-tool/tests-coverage-tool@latest
 ```
 
 Once installed, you can generate the coverage report with the following command:
@@ -153,7 +157,8 @@ state variable for further analytics or reporting
 
 ## Config
 
-The tool can be configured via environment variables or a YAML configuration file. Below are the available options:
+The tool can be configured via environment variables or a YAML configuration file. YAML values override environment
+variables; unspecified YAML values retain the environment values or defaults. Below are the available options:
 
 | Environment                            | YAML                  | Default               | Example                                                                                                                                                                                                                                   |
 |----------------------------------------|-----------------------|-----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -173,7 +178,7 @@ The tool can be configured via environment variables or a YAML configuration fil
 To save coverage history, you must retain the history file, which is configured using the environment variables
 `TESTS_COVERAGE_HISTORY_DIR` and `TESTS_COVERAGE_HISTORY_FILE`. By default, the history file will be stored in the root
 directory with the name `coverage-history.json`. You do not need to create this file manually—it will be automatically
-generated when you run the save-report command. After that, you simply need to keep the `coverage-history.jso`n file for
+generated when you run the save-report command. After that, you simply need to keep the `coverage-history.json` file for
 subsequent report generations. Each time a new report is generated, the file will be automatically updated with the
 latest coverage history, and the history will be added to the coverage report.
 
@@ -188,7 +193,7 @@ file using the `historyDir` and `historyFile` settings.
 To save a coverage report, use the following command:
 
 ```shell
-go run ./tests-coverage-tool/main.go save-report
+go run ./tests-coverage-tool save-report
 ```
 
 This command will generate and save the coverage report based on the collected test data.
@@ -201,7 +206,7 @@ To update and merge submodules and then copy the report, run:
 git submodule update --init --recursive
 git submodule update --remote --merge
 
-go run ./tests-coverage-tool/main.go copy-report
+go run ./tests-coverage-tool copy-report
 
 ```
 
@@ -212,10 +217,48 @@ This command is useful for syncing submodules and copying the report to the desi
 To print the current configuration, use the following command:
 
 ```shell
-go run ./tests-coverage-tool/main.go print-config
+go run ./tests-coverage-tool print-config
 
 ```
 
 This command outputs the configuration settings currently in use, allowing you to verify and adjust as needed
 
 
+
+## Development
+
+Install [Task](https://taskfile.dev/docs/installation), then clone the repository and install dependencies:
+
+```shell
+git clone https://github.com/Nikita-Filonov/tests-coverage-tool.git
+cd tests-coverage-tool
+go mod download
+task install-tools
+```
+
+The embedded HTML template is included in the repository, so building and testing the backend does not require the
+frontend submodule. Initialize the submodule only when updating the report template with `copy-report`.
+
+Run `task` or `task --list` to see all available tasks.
+
+| Command | Purpose |
+|---------|---------|
+| `task fmt` | Format Go source files |
+| `task lint` | Run the pinned golangci-lint version from `.golangci-lint-version` |
+| `task test` | Run all tests with race detection and shuffled execution |
+| `task coverage` | Generate `coverage.out` and print statement coverage |
+| `task build` | Build all packages and CLI commands |
+| `task check` | Run lint, coverage tests, and build |
+| `task tidy` | Synchronize and verify module dependencies |
+
+On systems without Task, run the equivalent Go commands directly:
+
+```shell
+go test -race -shuffle=on -count=1 -coverpkg=./... -covermode=atomic -coverprofile=coverage.out ./...
+go tool cover -func=coverage.out
+go build ./...
+```
+
+Coverage uses `-coverpkg=./...` to count calls from integration tests across all backend packages, including the CLI.
+Run `go tool cover -html=coverage.out` to inspect coverage in your browser. This measures the tool's own Go code;
+the generated gRPC report measures coverage of service contracts.
