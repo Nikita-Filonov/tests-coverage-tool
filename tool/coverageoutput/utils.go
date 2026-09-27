@@ -7,6 +7,10 @@ import (
 )
 
 func getCoveragePercent(original, actual []string) float64 {
+	if len(original) == 0 {
+		return 0
+	}
+
 	left, _ := lo.Difference(original, actual)
 
 	totalCovered := len(original) - len(left)
