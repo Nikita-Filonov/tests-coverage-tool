@@ -200,17 +200,14 @@ This command will generate and save the coverage report based on the collected t
 
 ### Copy report
 
-To update and merge submodules and then copy the report, run:
+To initialize the pinned frontend version and copy its standalone HTML report, run:
 
 ```shell
 git submodule update --init --recursive
-git submodule update --remote --merge
-
 go run ./tests-coverage-tool copy-report
-
 ```
 
-This command is useful for syncing submodules and copying the report to the desired location.
+The copied template is embedded in the backend binary. Update the submodule tag and commit in `.gitmodules` before copying a new frontend release.
 
 ### Print config
 
