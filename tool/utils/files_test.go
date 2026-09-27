@@ -25,17 +25,30 @@ type saveFileTest struct {
 func TestReadFile(t *testing.T) {
 	tests := []readFileTest{
 		{
-			name:     "File exist",
-			want:     []byte("default\n"),
-			filename: "../../testdata/default.txt",
+			name: "LF line endings",
+			want: []byte("default\n"),
+		},
+		{
+			name: "CRLF line endings",
+			want: []byte("default\r\n"),
+		},
+		{
+			name: "Binary content",
+			want: []byte{0x00, 0xff, 0x0d, 0x0a},
+		},
+		{
+			name: "Empty file",
+			want: []byte{},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			content, err := ReadFile(test.filename)
+			filename := filepath.Join(t.TempDir(), "input.txt")
+			require.NoError(t, os.WriteFile(filename, test.want, 0o600))
+			content, err := ReadFile(filename)
 
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, test.want, content)
 		})
 	}
