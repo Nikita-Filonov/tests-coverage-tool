@@ -254,11 +254,11 @@ Run `task` or `task --list` to see all available tasks.
 On systems without Task, run the equivalent Go commands directly:
 
 ```shell
-go test -race -shuffle=on -count=1 -coverpkg=./... -covermode=atomic -coverprofile=coverage.out ./...
-go tool cover -func=coverage.out
+go test -race -shuffle=on -count=1 -coverpkg './...' -covermode=atomic -coverprofile coverage.out ./...
+go tool cover -func coverage.out
 go build ./...
 ```
 
 Coverage uses `-coverpkg=./...` to count calls from integration tests across all backend packages, including the CLI.
-Run `go tool cover -html=coverage.out` to inspect coverage in your browser. This measures the tool's own Go code;
+Run `go tool cover -html coverage.out` to inspect coverage in your browser. This measures the tool's own Go code;
 the generated gRPC report measures coverage of service contracts.

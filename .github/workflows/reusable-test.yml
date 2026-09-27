@@ -29,9 +29,9 @@ jobs:
       - name: Verify dependencies
         run: go mod verify
       - name: Run tests with race detection and coverage
-        run: go test -race -shuffle=on -count=1 -coverpkg=./... -covermode=atomic -coverprofile=coverage.out ./...
+        run: go test -race -shuffle=on -count=1 -coverpkg './...' -covermode=atomic -coverprofile coverage.out ./...
       - name: Show coverage
-        run: go tool cover -func=coverage.out
+        run: go tool cover -func coverage.out
       - name: Save coverage artifact
         if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v7

@@ -35,8 +35,8 @@ tasks:
   coverage:
     desc: Generate coverage.out and show statement coverage
     cmds:
-      - go test -race -shuffle=on -count=1 -coverpkg=./... -covermode=atomic -coverprofile=coverage.out ./...
-      - go tool cover -func=coverage.out
+      - go test -race -shuffle=on -count=1 -coverpkg './...' -covermode=atomic -coverprofile coverage.out ./...
+      - go tool cover -func coverage.out
 
   build:
     desc: Build all packages and CLI commands
