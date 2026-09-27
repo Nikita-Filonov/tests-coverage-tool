@@ -9,14 +9,18 @@ import (
 	"github.com/Nikita-Filonov/tests-coverage-tool/tests-coverage-tool/report"
 )
 
-func main() {
-	var rootCmd = &cobra.Command{Use: "tests-coverage-tool"}
+func newRootCommand() *cobra.Command {
+	rootCmd := &cobra.Command{Use: "tests-coverage-tool", SilenceUsage: true, SilenceErrors: true}
 
 	rootCmd.AddCommand(report.NewSaveReportCommand())
 	rootCmd.AddCommand(report.NewCopyReportCommand())
 	rootCmd.AddCommand(config.NewPrintConfigCommand())
 
-	if err := rootCmd.Execute(); err != nil {
+	return rootCmd
+}
+
+func main() {
+	if err := newRootCommand().Execute(); err != nil {
 		log.Fatalf("Failed to run command: %v", err)
 	}
 }
