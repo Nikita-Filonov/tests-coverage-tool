@@ -2,6 +2,7 @@ package report
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/spf13/cobra"
 
@@ -16,29 +17,34 @@ import (
 )
 
 func SaveReport() {
-	ctx := context.Background()
+	if err := saveReport(context.Background()); err != nil {
+		logger.FatalSavingReport("coverage", err)
+	}
+}
 
+func saveReport(ctx context.Context) error {
 	toolConfig, err := config.NewConfig()
 	if err != nil {
-		logger.FatalBuildingNewClient("config", err)
+		return fmt.Errorf("failed to build config: %w", err)
 	}
 
 	inputCoverageClient, err := coverageinupt.NewInputCoverageClient(toolConfig.GetResultsDir())
 	if err != nil {
-		logger.FatalBuildingNewClient("input coverage client", err)
+		return fmt.Errorf("failed to build input coverage client: %w", err)
 	}
 
 	inputHistoryClientFactory, err := history.NewInputHistoryClientFactory(toolConfig)
 	if err != nil {
-		logger.FatalBuildingNewClient("input history client factory", err)
+		return fmt.Errorf("failed to build input history client factory: %w", err)
 	}
 
 	coverageState := models.NewCoverageState(toolConfig)
 	for _, service := range toolConfig.Services {
 		reflectionClient, err := reflection.NewGRPCReflectionClient(ctx, service)
 		if err != nil {
-			logger.FatalBuildingNewClient("grpc reflection client", err)
+			return fmt.Errorf("failed to build grpc reflection client: %w", err)
 		}
+		defer func() { _ = reflectionClient.Close() }()
 
 		inputHistoryClient := inputHistoryClientFactory.NewClient(service.Key)
 
@@ -46,17 +52,17 @@ func SaveReport() {
 			reflectionClient, inputHistoryClient, inputCoverageClient,
 		)
 		if err != nil {
-			logger.FatalBuildingNewClient("output coverage client", err)
+			return fmt.Errorf("failed to build output coverage client: %w", err)
 		}
 
 		serviceCoverage, err := outputCoverageClient.GetServiceCoverage()
 		if err != nil {
-			logger.FatalGettingEntity("service coverage", err)
+			return fmt.Errorf("failed to get service coverage: %w", err)
 		}
 
 		logicalServiceCoverage, err := outputCoverageClient.GetLogicalServiceCoverages()
 		if err != nil {
-			logger.FatalGettingEntity("logical service coverages", err)
+			return fmt.Errorf("failed to get logical service coverages: %w", err)
 		}
 
 		coverageState.ServiceCoverages[service.Key] = serviceCoverage
@@ -65,24 +71,25 @@ func SaveReport() {
 
 	outputHistoryClient := history.NewOutputHistoryClient(toolConfig, coverageState)
 	if err = outputHistoryClient.SaveHistory(); err != nil {
-		logger.FatalBuildingNewClient("output history client", err)
+		return fmt.Errorf("failed to save history: %w", err)
 	}
 
 	coverageReportClient := report.NewCoverageReportClient(toolConfig, coverageState)
 
 	if err = coverageReportClient.SaveHTMLReport(); err != nil {
-		logger.FatalSavingReport("HTML", err)
+		return fmt.Errorf("failed to save HTML report: %w", err)
 	}
 
 	if err = coverageReportClient.SaveJSONReport(); err != nil {
-		logger.FatalSavingReport("JSON", err)
+		return fmt.Errorf("failed to save JSON report: %w", err)
 	}
+	return nil
 }
 
 func NewSaveReportCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "save-report",
 		Short: "Saves a report",
-		Run:   func(_ *cobra.Command, _ []string) { SaveReport() },
+		RunE:  func(cmd *cobra.Command, _ []string) error { return saveReport(cmd.Context()) },
 	}
 }
