@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/caarlos0/env/v8"
+	"github.com/caarlos0/env/v11"
 	"github.com/samber/lo"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/Nikita-Filonov/tests-coverage-tool/tool/utils"
 )
@@ -59,7 +59,7 @@ func NewConfig() (Config, error) {
 	}
 
 	if err := cfg.validate(); err != nil {
-		log.Fatalf("Error building config: %v", err)
+		return Config{}, fmt.Errorf("invalid configuration: %w", err)
 	}
 
 	return cfg, nil
