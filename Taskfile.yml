@@ -1,0 +1,64 @@
+version: '3'
+
+vars:
+  GOLANGCI_LINT_VERSION:
+    sh: cat .golangci-lint-version
+  GOLANGCI_LINT: '{{.ROOT_DIR}}/.bin/golangci-lint{{if eq OS "windows"}}.exe{{end}}'
+
+tasks:
+  default:
+    desc: List available tasks
+    aliases: [help]
+    cmds:
+      - task --list
+
+  fmt:
+    desc: Format Go source files
+    cmds:
+      - gofmt -w tool tests-coverage-tool
+
+  lint:
+    desc: Check formatting and run golangci-lint
+    preconditions:
+      - sh: test -f "{{.GOLANGCI_LINT}}"
+        msg: 'Run task install-tools to install golangci-lint first.'
+      - sh: test -z "$(gofmt -l tool tests-coverage-tool)"
+        msg: 'Run task fmt to format Go source files first.'
+    cmds:
+      - '"{{.GOLANGCI_LINT}}" run'
+
+  test:
+    desc: Run tests with race detection and shuffled execution
+    cmds:
+      - go test -race -shuffle=on -count=1 ./...
+
+  coverage:
+    desc: Generate coverage.out and show statement coverage
+    cmds:
+      - go test -race -shuffle=on -count=1 -coverpkg=./... -covermode=atomic -coverprofile=coverage.out ./...
+      - go tool cover -func=coverage.out
+
+  build:
+    desc: Build all packages and CLI commands
+    cmds:
+      - go build ./...
+
+  check:
+    desc: Run lint, coverage tests, and build
+    cmds:
+      - task: lint
+      - task: coverage
+      - task: build
+
+  tidy:
+    desc: Synchronize and verify module dependencies
+    cmds:
+      - go mod tidy
+      - go mod verify
+
+  install-tools:
+    desc: Install the pinned golangci-lint version into .bin
+    env:
+      GOBIN: '{{.ROOT_DIR}}/.bin'
+    cmds:
+      - go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@{{.GOLANGCI_LINT_VERSION}}
