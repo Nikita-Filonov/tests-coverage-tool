@@ -1,6 +1,11 @@
 package report
 
 import (
+	"github.com/Nikita-Filonov/tests-coverage-tool/tool/models"
+	"github.com/stretchr/testify/require"
+	"math"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -30,7 +35,7 @@ func TestCoverageReportClientSaveHTMLReport(t *testing.T) {
 			name: "Empty state",
 			want: nil,
 			client: CoverageReportClient{
-				config: config.Config{HTMLReportDir: ".", HTMLReportFile: "report.html"},
+				config: config.Config{HTMLReportDir: t.TempDir(), HTMLReportFile: "report.html"},
 			},
 		},
 	}
@@ -58,7 +63,7 @@ func TestCoverageReportClientSaveJSONReport(t *testing.T) {
 			name: "Empty state",
 			want: nil,
 			client: CoverageReportClient{
-				config: config.Config{JSONReportDir: ".", JSONReportFile: "report.json"},
+				config: config.Config{JSONReportDir: t.TempDir(), JSONReportFile: "report.json"},
 			},
 		},
 	}
@@ -68,4 +73,28 @@ func TestCoverageReportClientSaveJSONReport(t *testing.T) {
 			assert.Equal(t, test.want, test.client.SaveJSONReport())
 		})
 	}
+}
+
+func TestReportSerializationErrors(t *testing.T) {
+	state := models.NewCoverageState(config.Config{})
+	state.ServiceCoverages["api"] = models.ServiceCoverage{TotalCoverage: math.NaN()}
+	dir := t.TempDir()
+	client := NewCoverageReportClient(config.Config{
+		HTMLReportDir: dir, HTMLReportFile: "report.html", JSONReportDir: dir, JSONReportFile: "report.json",
+	}, state)
+	assert.Error(t, client.SaveHTMLReport())
+	assert.Error(t, client.SaveJSONReport())
+	assert.NoFileExists(t, filepath.Join(dir, "report.html"))
+	assert.NoFileExists(t, filepath.Join(dir, "report.json"))
+}
+
+func TestReportWriteErrors(t *testing.T) {
+	dir := t.TempDir()
+	file := filepath.Join(dir, "file")
+	require.NoError(t, os.WriteFile(file, nil, 0o600))
+	client := NewCoverageReportClient(config.Config{
+		HTMLReportDir: file, HTMLReportFile: "report.html", JSONReportDir: file, JSONReportFile: "report.json",
+	}, models.NewCoverageState(config.Config{}))
+	assert.Error(t, client.SaveHTMLReport())
+	assert.Error(t, client.SaveJSONReport())
 }

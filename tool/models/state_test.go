@@ -1,6 +1,7 @@
 package models
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -124,4 +125,11 @@ func TestCoverageStateGetHistoryState(t *testing.T) {
 			assert.Equal(t, test.want, test.state.GetHistoryState())
 		})
 	}
+}
+
+func TestReportStateJSONRejectsInvalidCoverage(t *testing.T) {
+	state := NewCoverageState(config.Config{})
+	state.ServiceCoverages["api"] = ServiceCoverage{TotalCoverage: math.Inf(1)}
+	_, err := state.GetReportStateJSON()
+	assert.Error(t, err)
 }

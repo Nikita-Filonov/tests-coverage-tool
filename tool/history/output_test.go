@@ -30,7 +30,7 @@ func TestOutputHistoryClientSaveHistory(t *testing.T) {
 			name: "Empty state",
 			want: nil,
 			client: OutputHistoryClient{
-				config: config.Config{HistoryDir: ".", HistoryFile: "history.json"},
+				config: config.Config{HistoryDir: t.TempDir(), HistoryFile: "history.json"},
 			},
 		},
 	}

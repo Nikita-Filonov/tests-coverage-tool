@@ -24,6 +24,10 @@ type getRequestCoveragePercentTest struct {
 func TestGetCoveragePercent(t *testing.T) {
 	tests := []getCoveragePercentTest{
 		{
+			name:   "No methods in contract",
+			result: 0,
+		},
+		{
 			name:     "100% coverage",
 			actual:   []string{"a", "b", "c"},
 			original: []string{"a", "b", "c"},

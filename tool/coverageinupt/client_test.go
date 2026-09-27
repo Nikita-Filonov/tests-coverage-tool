@@ -1,6 +1,10 @@
 package coverageinupt
 
 import (
+	"github.com/Nikita-Filonov/tests-coverage-tool/tool/utils"
+	"github.com/stretchr/testify/require"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -299,4 +303,23 @@ func TestInputCoverageClientGetMergedResponseParameters(t *testing.T) {
 			assert.Equal(t, test.want, result)
 		})
 	}
+}
+
+func TestInputCoverageClientReadsValidResults(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, utils.SaveJSONFile(models.Result{Method: "service.Check"}, dir, "valid.json"))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "broken.json"), []byte("{"), 0o600))
+	require.NoError(t, os.Mkdir(filepath.Join(dir, "directory"), 0o755))
+	client, err := NewInputCoverageClient(dir)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"service.Check"}, client.GetMethods(ResultsFilters{FilterByLogicalService: "service"}))
+}
+
+func TestInputCoverageClientReadErrors(t *testing.T) {
+	_, err := NewInputCoverageClient(filepath.Join(t.TempDir(), "missing"))
+	assert.ErrorIs(t, err, os.ErrNotExist)
+	file := filepath.Join(t.TempDir(), "file")
+	require.NoError(t, os.WriteFile(file, nil, 0o600))
+	_, err = NewInputCoverageClient(file)
+	assert.Error(t, err)
 }
